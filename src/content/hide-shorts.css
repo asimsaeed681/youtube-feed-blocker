@@ -1,0 +1,45 @@
+/*
+ * Static Shorts-hiding rules. Applied before first paint so there is no flash of
+ * Shorts content. All rules are scoped to html:not(.yfb-shorts-allowed) — the
+ * content script adds .yfb-shorts-allowed to <html> at document_start when the
+ * user has turned Shorts blocking OFF, which disables every rule below at once.
+ */
+
+/* --- Left sidebar / guide entries pointing at /shorts ---
+   The collapsed mini-guide link is href="/shorts/" (trailing slash) and the
+   expanded guide link is href="/shorts", so match on prefix, not equality. */
+html:not(.yfb-shorts-allowed) ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-guide-entry-renderer:has(a[title="Shorts"]) {
+  display: none !important;
+}
+
+/* --- Shorts shelves in the home feed and elsewhere --- */
+html:not(.yfb-shorts-allowed) ytd-rich-shelf-renderer[is-shorts],
+html:not(.yfb-shorts-allowed) ytd-reel-shelf-renderer,
+html:not(.yfb-shorts-allowed) ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html:not(.yfb-shorts-allowed) grid-shelf-view-model:has(a[href^="/shorts"]) {
+  display: none !important;
+}
+
+/* --- Individual Shorts tiles wherever they appear (search, related, grids) --- */
+html:not(.yfb-shorts-allowed) ytd-video-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-grid-video-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-rich-item-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-compact-video-renderer:has(a[href^="/shorts"]),
+html:not(.yfb-shorts-allowed) ytm-shorts-lockup-view-model,
+html:not(.yfb-shorts-allowed) ytm-shorts-lockup-view-model-v2 {
+  display: none !important;
+}
+
+/* --- "Shorts" tab on channel pages --- */
+html:not(.yfb-shorts-allowed) yt-tab-shape[tab-title="Shorts"],
+html:not(.yfb-shorts-allowed) tp-yt-paper-tab:has([href$="/shorts"]),
+html:not(.yfb-shorts-allowed) ytd-tab-renderer:has([href$="/shorts"]) {
+  display: none !important;
+}
+
+/* --- "Shorts" filter chip on the home feed --- */
+html:not(.yfb-shorts-allowed) yt-chip-cloud-chip-renderer:has(yt-formatted-string[title="Shorts"]) {
+  display: none !important;
+}

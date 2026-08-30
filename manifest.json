@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Feed Blocker",
+  "version": "0.1.0",
+  "description": "Removes YouTube Shorts everywhere and replaces the home feed with a blank space, productivity widgets, or (soon) an AI-curated feed.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "YouTube Feed Blocker",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage"],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "run_at": "document_start",
+      "css": ["src/content/hide-shorts.css", "src/content/overlay.css"],
+      "js": [
+        "src/lib/defaults.js",
+        "src/lib/storage.js",
+        "src/content/shorts-blocker.js",
+        "src/content/feed-widgets.js",
+        "src/content/feed-replacer.js"
+      ]
+    }
+  ]
+}

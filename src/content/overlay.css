@@ -1,0 +1,255 @@
+/*
+ * Styles for the injected home-feed panel. Scoped under html.yfb-home-replaced
+ * and #yfb-panel so nothing leaks into the rest of YouTube.
+ *
+ * Colours use self-contained --yfb-* tokens rather than YouTube's --yt-spec-*
+ * custom properties: those were renamed/removed in recent YouTube builds, and
+ * the old fallbacks (#0f0f0f text) rendered dark-on-dark and invisible in dark
+ * mode. Dark mode is keyed on <html dark>, the attribute YouTube sets for its
+ * dark theme, with prefers-color-scheme as a backstop.
+ */
+
+/* Hide the real recommendation grid + filter chips on the home page only. */
+html.yfb-home-replaced ytd-browse[page-subtype="home"] ytd-rich-grid-renderer,
+html.yfb-home-replaced ytd-browse[page-subtype="home"] #contents.ytd-rich-grid-renderer,
+html.yfb-home-replaced ytd-browse[page-subtype="home"] ytd-feed-filter-chip-bar-renderer,
+html.yfb-home-replaced ytd-browse[page-subtype="home"] #chips-wrapper {
+  display: none !important;
+}
+
+#yfb-panel {
+  /* light theme tokens */
+  --yfb-text: #0f0f0f;
+  --yfb-subtext: #606060;
+  --yfb-card: #f2f2f2;
+  --yfb-border: rgba(0, 0, 0, 0.12);
+  --yfb-input-bg: #ffffff;
+  --yfb-btn-bg: #0f0f0f;
+  --yfb-btn-fg: #ffffff;
+
+  max-width: 720px;
+  margin: 24px auto 80px;
+  padding: 0 16px;
+  font-family: "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--yfb-text);
+}
+
+html[dark] #yfb-panel {
+  --yfb-text: #f1f1f1;
+  --yfb-subtext: #aaaaaa;
+  --yfb-card: #272727;
+  --yfb-border: rgba(255, 255, 255, 0.16);
+  --yfb-input-bg: #121212;
+  --yfb-btn-bg: #f1f1f1;
+  --yfb-btn-fg: #0f0f0f;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([dark]) #yfb-panel {
+    --yfb-text: #f1f1f1;
+    --yfb-subtext: #aaaaaa;
+    --yfb-card: #272727;
+    --yfb-border: rgba(255, 255, 255, 0.16);
+    --yfb-input-bg: #121212;
+    --yfb-btn-bg: #f1f1f1;
+    --yfb-btn-fg: #0f0f0f;
+  }
+}
+
+/* --- blank mode --- */
+#yfb-panel .yfb-blank {
+  text-align: center;
+  padding: 96px 16px;
+}
+#yfb-panel .yfb-blank__msg {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+#yfb-panel .yfb-blank__sub {
+  font-size: 14px;
+  margin: 0;
+  color: var(--yfb-subtext);
+}
+
+/* --- widgets mode --- */
+#yfb-panel .yfb-widgets__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+#yfb-panel .yfb-widget {
+  background: var(--yfb-card);
+  border: 1px solid var(--yfb-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+#yfb-panel .yfb-widget--todo {
+  grid-column: 1 / -1;
+}
+#yfb-panel .yfb-widget__title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px;
+  color: var(--yfb-subtext);
+}
+
+/* to-do */
+#yfb-panel .yfb-todo__list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#yfb-panel .yfb-todo__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+#yfb-panel .yfb-todo__item.is-done .yfb-todo__text {
+  text-decoration: line-through;
+  color: var(--yfb-subtext);
+}
+#yfb-panel .yfb-todo__text {
+  flex: 1;
+  word-break: break-word;
+}
+#yfb-panel .yfb-todo__empty {
+  font-size: 13px;
+  color: var(--yfb-subtext);
+}
+#yfb-panel .yfb-todo__del {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--yfb-subtext);
+}
+#yfb-panel .yfb-todo__del:hover {
+  color: var(--yfb-text);
+}
+#yfb-panel .yfb-todo__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--yfb-border);
+  background: var(--yfb-input-bg);
+  color: var(--yfb-text);
+  font-size: 14px;
+}
+
+/* timer */
+#yfb-panel .yfb-timer__display {
+  font-size: 40px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  margin: 4px 0 12px;
+}
+#yfb-panel .yfb-timer__display.is-done {
+  color: #ff5252;
+}
+#yfb-panel .yfb-timer__controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* quote */
+#yfb-panel .yfb-widget--quote {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#yfb-panel .yfb-quote__text {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 8px;
+  font-style: italic;
+}
+#yfb-panel .yfb-quote__by {
+  font-size: 13px;
+  color: var(--yfb-subtext);
+}
+
+/* shared button */
+#yfb-panel .yfb-btn {
+  padding: 8px 16px;
+  border-radius: 18px;
+  border: none;
+  background: var(--yfb-btn-bg);
+  color: var(--yfb-btn-fg);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+#yfb-panel .yfb-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--yfb-border);
+  color: var(--yfb-text);
+}
+
+/* --- ai mode --- */
+#yfb-panel .yfb-ai {
+  padding: 24px 0;
+}
+#yfb-panel .yfb-ai__title {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+#yfb-panel .yfb-ai__sub {
+  font-size: 14px;
+  color: var(--yfb-subtext);
+  margin: 0 0 16px;
+}
+#yfb-panel .yfb-ai__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+#yfb-panel .yfb-ai__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--yfb-border);
+  background: var(--yfb-input-bg);
+  color: var(--yfb-text);
+  font: inherit;
+  resize: vertical;
+}
+#yfb-panel .yfb-ai__status {
+  font-size: 13px;
+  color: var(--yfb-subtext);
+  min-height: 1em;
+}
+#yfb-panel .yfb-ai__mock {
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px dashed var(--yfb-border);
+  border-radius: 10px;
+}
+#yfb-panel .yfb-ai__mock-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 6px;
+  color: var(--yfb-subtext);
+}
+#yfb-panel .yfb-ai__mock-body {
+  font-size: 14px;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  #yfb-panel .yfb-widgets__grid {
+    grid-template-columns: 1fr;
+  }
+}

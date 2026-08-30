@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Feed Blocker</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="pop-header">
+      <h1>YouTube Feed Blocker</h1>
+    </header>
+
+    <section class="pop-section">
+      <label class="pop-switch">
+        <input type="checkbox" id="shortsBlocking" />
+        <span class="pop-switch__label">
+          Block Shorts everywhere
+          <small>Hides the Shorts tab, shelves and sidebar link, and sends
+            <code>/shorts</code> links to the normal player.</small>
+        </span>
+      </label>
+    </section>
+
+    <section class="pop-section">
+      <h2 class="pop-section__title">Home feed</h2>
+      <div class="pop-radios" role="radiogroup" aria-label="Home feed mode">
+        <label class="pop-radio">
+          <input type="radio" name="feedMode" value="blank" />
+          <span><strong>Blank</strong><small>Empty, calm home page.</small></span>
+        </label>
+        <label class="pop-radio">
+          <input type="radio" name="feedMode" value="widgets" />
+          <span><strong>Productivity widgets</strong><small>To-do list, focus timer, a daily quote.</small></span>
+        </label>
+        <label class="pop-radio">
+          <input type="radio" name="feedMode" value="ai" />
+          <span><strong>AI-curated</strong><small>Describe what you want to see. <em>Preview — not wired up yet.</em></small></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="pop-section pop-conditional" id="widgetOptions" hidden>
+      <h2 class="pop-section__title">Widgets to show</h2>
+      <label class="pop-check"><input type="checkbox" id="w_todo" /> To-do list</label>
+      <label class="pop-check"><input type="checkbox" id="w_timer" /> Focus timer</label>
+      <label class="pop-check"><input type="checkbox" id="w_quote" /> Daily quote</label>
+    </section>
+
+    <section class="pop-section pop-conditional" id="aiOptions" hidden>
+      <h2 class="pop-section__title">Feed instruction</h2>
+      <textarea
+        id="aiInstruction"
+        rows="4"
+        maxlength="500"
+        placeholder='e.g. "Only in-depth coding tutorials and conference talks. No clickbait, no reactions, no news."'
+      ></textarea>
+      <p class="pop-hint">
+        Saved now, applied later. The classifier runs through a backend service
+        that isn't built yet, so nothing is filtered by AI in this build.
+      </p>
+    </section>
+
+    <footer class="pop-footer">
+      <span id="version"></span>
+      <span>Sideload build — not on the Web Store</span>
+    </footer>
+
+    <script src="../lib/defaults.js"></script>
+    <script src="../lib/storage.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

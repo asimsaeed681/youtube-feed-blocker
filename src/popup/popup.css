@@ -1,0 +1,128 @@
+:root {
+  --bg: #ffffff;
+  --fg: #0f0f0f;
+  --muted: #606060;
+  --line: rgba(0, 0, 0, 0.12);
+  --accent: #0f0f0f;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #212121;
+    --fg: #f1f1f1;
+    --muted: #aaaaaa;
+    --line: rgba(255, 255, 255, 0.15);
+    --accent: #f1f1f1;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  width: 320px;
+  margin: 0;
+  padding: 0;
+  font-family: "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+}
+
+.pop-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.pop-header h1 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.pop-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.pop-section__title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+code {
+  font-size: 11px;
+  background: var(--line);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* switch (just a styled checkbox) */
+.pop-switch {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.pop-switch input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.pop-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pop-radio {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.pop-radio input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.pop-radio strong {
+  font-weight: 500;
+}
+
+.pop-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--fg);
+  resize: vertical;
+}
+.pop-hint {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 8px 0 0;
+}
+
+.pop-footer {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}

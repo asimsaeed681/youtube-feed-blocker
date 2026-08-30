@@ -1,0 +1,14 @@
+node_modules/
+test/screenshots/
+test/live-qa/
+.playwright-mcp/
+*.log
+.DS_Store
+
+# Never commit browser session data, even if a profile or export ever lands here
+storage-state.json
+*storage-state*.json
+*-profile/
+**/Cookies
+**/Cookies-journal
+qa-status*.json
