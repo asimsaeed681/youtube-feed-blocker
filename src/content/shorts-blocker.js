@@ -79,15 +79,20 @@
     "YTD-RICH-SECTION-RENDERER",
   ];
 
+  // Marker class, not an inline style: hide-shorts.css hides .yfb-shorts-hit only
+  // while blocking is on (html:not(.yfb-shorts-allowed)), so turning blocking off
+  // reveals everything again with no page reload.
+  const HIT = "yfb-shorts-hit";
+
   function stripShorts() {
     if (!blocking) return;
-    // Any anchor that points at a Short — hide its closest known container.
+    // Any anchor that points at a Short — mark its closest known container.
     const anchors = document.querySelectorAll('a[href^="/shorts"]');
     for (const a of anchors) {
       let el = a;
       while (el && el !== document.body) {
         if (SHORTS_CONTAINERS.includes(el.tagName)) {
-          el.style.setProperty("display", "none", "important");
+          el.classList.add(HIT);
           break;
         }
         el = el.parentElement;
@@ -97,9 +102,12 @@
     document
       .querySelectorAll("ytd-rich-shelf-renderer[is-shorts]")
       .forEach((el) => {
-        const section = el.closest("ytd-rich-section-renderer") || el;
-        section.style.setProperty("display", "none", "important");
+        (el.closest("ytd-rich-section-renderer") || el).classList.add(HIT);
       });
+    // "Shorts" filter chip (search results etc.) — CSS can't match by text.
+    document.querySelectorAll("yt-chip-cloud-chip-renderer").forEach((chip) => {
+      if (chip.textContent.trim() === "Shorts") chip.classList.add(HIT);
+    });
   }
 
   let scheduled = false;

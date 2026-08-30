@@ -43,3 +43,10 @@ html:not(.yfb-shorts-allowed) ytd-tab-renderer:has([href$="/shorts"]) {
 html:not(.yfb-shorts-allowed) yt-chip-cloud-chip-renderer:has(yt-formatted-string[title="Shorts"]) {
   display: none !important;
 }
+
+/* --- Anything the shorts-blocker.js backstop marked (containers it walked up to,
+   and the "Shorts" filter chip matched by text, which CSS can't do). Scoped like
+   every rule here, so turning blocking off reveals it again with no reload. --- */
+html:not(.yfb-shorts-allowed) .yfb-shorts-hit {
+  display: none !important;
+}
