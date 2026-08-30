@@ -5,6 +5,9 @@ test/live-qa/
 *.log
 .DS_Store
 
+# Web Store submission package (rebuild with: git archive, see store-listing.md)
+*.zip
+
 # Never commit browser session data, even if a profile or export ever lands here
 storage-state.json
 *storage-state*.json
