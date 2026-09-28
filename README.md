@@ -13,8 +13,9 @@ A Manifest V3 Chrome extension that:
      *Preview only in this build — the classifier backend is not wired up yet.*
 3. Persists all settings via `chrome.storage.sync`.
 
-This is a **sideload / load-unpacked build**. It is not on the Chrome Web Store
-and should not be published there yet.
+You can load this build unpacked (below). It is being prepared for an
+**Unlisted** Chrome Web Store release (link-only, not searchable); see
+`store-listing.md` for the listing copy and submission steps.
 
 ## Install (load unpacked)
 
@@ -84,4 +85,4 @@ outside OneDrive and must never be committed.
 - AI feed classification (needs a backend proxy that holds the API key — no key
   ever ships in the client).
 - Filtering feeds other than the home feed.
-- Any Chrome Web Store listing.
+- A public (searchable) Chrome Web Store listing.

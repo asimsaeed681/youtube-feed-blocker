@@ -57,4 +57,4 @@ update is released.
 
 ## Contact
 
-Questions about this policy: `<aasim.saeed681@gmail.com>`
+Questions about this policy: [aasim.saeed681@gmail.com](mailto:aasim.saeed681@gmail.com)

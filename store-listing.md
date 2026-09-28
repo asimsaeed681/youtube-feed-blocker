@@ -55,7 +55,7 @@ everything comes back with no reload.
 PRIVACY
 No data is collected. No network requests. Your settings are stored in your
 browser (chrome.storage) and synced only across your own Chrome by Chrome
-itself. Full policy: <privacy policy URL>
+itself. Full policy: https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
 
 ABOUT "AI-CURATED" MODE
 The instruction box works and your text is saved, but the classification service
@@ -125,9 +125,9 @@ English
 | Asset | Requirement | Status |
 |---|---|---|
 | Store icon | 128x128 PNG | Have `icons/icon128.png` (placeholder red-slash mark) |
-| Screenshots | 1-5, 1280x800 or 640x400 PNG/JPEG | **TODO** - can be generated from the QA screenshots (widgets / blank / AI home, before/after Shorts). None are in the repo yet at the right size. |
+| Screenshots | 1-5, 1280x800 or 640x400 PNG/JPEG | Done - five 1280x800 PNGs in `store-assets/screenshots/` |
 | Small promo tile | 440x280 PNG (optional for Unlisted) | Optional, skip for now |
-| Privacy policy URL | public, reachable | **TODO** - `privacy.html` drafted, not hosted yet |
+| Privacy policy URL | public, reachable | Done - https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html (GitHub Pages) |
 | Contact email (verified) | in the developer account | You set this in the account |
 
 ---
