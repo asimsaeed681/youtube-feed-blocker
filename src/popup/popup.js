@@ -9,8 +9,10 @@
   const YFB = window.YFB;
 
   const els = {
-    shortsBlocking: document.getElementById("shortsBlocking"),
+    toggles: Array.from(document.querySelectorAll("input[data-setting]")),
+    peekLevel: Array.from(document.querySelectorAll('input[name="peekLevel"]')),
     feedMode: Array.from(document.querySelectorAll('input[name="feedMode"]')),
+    feedSections: document.getElementById("feedSections"),
     widgetOptions: document.getElementById("widgetOptions"),
     aiOptions: document.getElementById("aiOptions"),
     w_todo: document.getElementById("w_todo"),
@@ -20,19 +22,22 @@
     version: document.getElementById("version"),
   };
 
-  function reflectConditionalSections(mode) {
-    els.widgetOptions.hidden = mode !== YFB.FEED_MODES.WIDGETS;
-    els.aiOptions.hidden = mode !== YFB.FEED_MODES.AI;
+  function reflectConditionalSections(settings) {
+    // Peek and feed-mode choices only matter while the home feed is hidden.
+    els.feedSections.hidden = !settings.hideHomeFeed;
+    els.widgetOptions.hidden = settings.feedMode !== YFB.FEED_MODES.WIDGETS;
+    els.aiOptions.hidden = settings.feedMode !== YFB.FEED_MODES.AI;
   }
 
   function reflect(settings) {
-    els.shortsBlocking.checked = settings.shortsBlocking;
+    els.toggles.forEach((t) => (t.checked = settings[t.dataset.setting]));
+    els.peekLevel.forEach((r) => (r.checked = r.value === settings.peekLevel));
     els.feedMode.forEach((r) => (r.checked = r.value === settings.feedMode));
     els.w_todo.checked = settings.widgets.todo;
     els.w_timer.checked = settings.widgets.timer;
     els.w_quote.checked = settings.widgets.quote;
     els.aiInstruction.value = settings.aiInstruction;
-    reflectConditionalSections(settings.feedMode);
+    reflectConditionalSections(settings);
   }
 
   async function init() {
@@ -42,17 +47,30 @@
       /* ignore */
     }
 
-    const settings = await YFB.getSettings();
-    reflect(settings);
+    let current = await YFB.getSettings();
+    reflect(current);
 
-    els.shortsBlocking.addEventListener("change", () => {
-      YFB.setSettings({ shortsBlocking: els.shortsBlocking.checked });
+    els.toggles.forEach((toggle) => {
+      toggle.addEventListener("change", () => {
+        const key = toggle.dataset.setting;
+        current = { ...current, [key]: toggle.checked };
+        reflectConditionalSections(current);
+        YFB.setSettings({ [key]: toggle.checked });
+      });
+    });
+
+    els.peekLevel.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        if (!radio.checked) return;
+        YFB.setSettings({ peekLevel: radio.value });
+      });
     });
 
     els.feedMode.forEach((radio) => {
       radio.addEventListener("change", () => {
         if (!radio.checked) return;
-        reflectConditionalSections(radio.value);
+        current = { ...current, feedMode: radio.value };
+        reflectConditionalSections(current);
         YFB.setSettings({ feedMode: radio.value });
       });
     });
@@ -74,7 +92,10 @@
     });
 
     // Keep the popup in sync if another surface changes settings while open.
-    YFB.onSettingsChanged(reflect);
+    YFB.onSettingsChanged((s) => {
+      current = s;
+      reflect(s);
+    });
   }
 
   init();

@@ -394,6 +394,48 @@ try {
   await yt.waitForTimeout(1500);
   log("home feed toggle off shows the real feed, no reload", await feedRevealed());
 
+  // ---------- v0.2: popup ----------
+  await setSettings(extId, {});
+  const pop = await ctx.newPage();
+  await pop.setViewportSize({ width: 340, height: 900 });
+  await pop.goto(`chrome-extension://${extId}/src/popup/popup.html`);
+  await pop.waitForTimeout(500);
+  const popInitial = await pop.evaluate(() => ({
+    home: document.querySelector('input[data-setting="hideHomeFeed"]')?.checked,
+    comments: document.querySelector('input[data-setting="hideComments"]')?.checked,
+    peek: document.querySelector('input[name="peekLevel"]:checked')?.value,
+  }));
+  log(
+    "popup reflects the defaults",
+    popInitial.home === true && popInitial.comments === false && popInitial.peek === "reason",
+    JSON.stringify(popInitial)
+  );
+
+  // Three quick clicks: all three changes must be saved.
+  await pop.click('label:has(input[name="peekLevel"][value="none"])');
+  await pop.click('label:has(input[data-setting="hideComments"])');
+  await pop.click('label:has(input[data-setting="hideHomeFeed"])');
+  await pop.waitForTimeout(500);
+  const popStored = await pop.evaluate(
+    () => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings)))
+  );
+  log(
+    "popup saves quick successive changes",
+    popStored.peekLevel === "none" && popStored.hideComments === true && popStored.hideHomeFeed === false,
+    JSON.stringify(popStored)
+  );
+  log(
+    "peek and feed sections hide while the home feed is shown",
+    await pop.evaluate(() => document.getElementById("feedSections").hidden === true)
+  );
+  const popupDashes = await pop.evaluate(() => document.body.innerText.includes("—"));
+  log("popup copy has no em dashes", !popupDashes);
+
+  await pop.click('label:has(input[data-setting="hideHomeFeed"])');
+  await pop.waitForTimeout(300);
+  await pop.screenshot({ path: path.join(shotDir, "popup.png"), fullPage: true });
+  await pop.close();
+
   // per-mode screenshots
   for (const mode of ["widgets", "ai", "blank"]) {
     await setSettings(extId, {

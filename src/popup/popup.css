@@ -1,128 +1,225 @@
+/*
+ * Popup styles. Dark tokens follow the v0.2 mockups (near-black background,
+ * slightly lighter cards, red accent); light tokens keep the same structure.
+ */
 :root {
-  --bg: #ffffff;
-  --fg: #0f0f0f;
-  --muted: #606060;
-  --line: rgba(0, 0, 0, 0.12);
-  --accent: #0f0f0f;
+  --bg: #f6f5f3;
+  --card: #ffffff;
+  --line: rgba(0, 0, 0, 0.08);
+  --fg: #161412;
+  --muted: #6b6560;
+  --accent: #d0302a;
+  --on-accent: #ffffff;
+  --track-off: #d9d6d2;
+  --knob-off: #ffffff;
+  --radio-off: #8f8983;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #212121;
-    --fg: #f1f1f1;
-    --muted: #aaaaaa;
-    --line: rgba(255, 255, 255, 0.15);
-    --accent: #f1f1f1;
+    --bg: #141312;
+    --card: #1f1d1b;
+    --line: rgba(255, 255, 255, 0.07);
+    --fg: #f3f1ee;
+    --muted: #a8a29c;
+    --accent: #d9362b;
+    --on-accent: #ffffff;
+    --track-off: #3a3735;
+    --knob-off: #8a8580;
+    --radio-off: #8a8580;
   }
 }
 
 * {
   box-sizing: border-box;
 }
+[hidden] {
+  display: none !important;
+}
 body {
-  width: 320px;
+  width: 340px;
   margin: 0;
-  padding: 0;
-  font-family: "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--fg);
+  font-family: "Segoe UI", system-ui, -apple-system, "Roboto", sans-serif;
   font-size: 14px;
+  line-height: 1.35;
 }
 
 .pop-header {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
+  padding: 16px 16px 4px;
 }
 .pop-header h1 {
-  font-size: 15px;
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
 }
-
+main {
+  padding: 0 12px 4px;
+}
 .pop-section {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
+  margin-top: 14px;
 }
-.pop-section__title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.pop-title {
+  margin: 0 4px 8px;
   color: var(--muted);
-  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
 }
-
-small {
+.pop-toggle strong,
+.pop-option strong {
   display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.pop-toggle small,
+.pop-option small {
+  display: block;
+  margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
-  line-height: 1.4;
-  margin-top: 2px;
-}
-code {
-  font-size: 11px;
-  background: var(--line);
-  padding: 1px 4px;
-  border-radius: 4px;
 }
 
-/* switch (just a styled checkbox) */
-.pop-switch {
+/* --- toggle rows --- */
+.pop-card {
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--card);
+}
+.pop-toggle {
   display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
   cursor: pointer;
 }
-.pop-switch input {
-  margin-top: 2px;
-  flex-shrink: 0;
+.pop-toggle + .pop-toggle {
+  border-top: 1px solid var(--line);
+}
+.pop-toggle__text {
+  flex: 1;
+  min-width: 0;
+}
+.pop-switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: 13px;
+  background: var(--track-off);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.pop-switch::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--knob-off);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+.pop-switch:checked {
+  background: var(--accent);
+}
+.pop-switch:checked::before {
+  transform: translateX(18px);
+  background: var(--on-accent);
 }
 
-.pop-radios {
+/* --- option cards --- */
+.pop-options {
+  display: grid;
+  gap: 8px;
+}
+.pop-option {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  background: var(--card);
+  cursor: pointer;
+}
+.pop-option:has(input:checked) {
+  border-color: var(--accent);
 }
 .pop-radio {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+  appearance: none;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  border: 2px solid var(--radio-off);
+  border-radius: 50%;
   cursor: pointer;
 }
-.pop-radio input {
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-.pop-radio strong {
-  font-weight: 500;
+.pop-radio:checked {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--card), inset 0 0 0 10px var(--accent);
 }
 
+/* --- sub-options under a feed mode --- */
+.pop-sub {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--card);
+}
 .pop-check {
   display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
   padding: 4px 0;
   cursor: pointer;
 }
-
+.pop-check input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+.pop-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
 textarea {
   width: 100%;
-  font: inherit;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 8px 10px;
   border: 1px solid var(--line);
+  border-radius: 8px;
   background: var(--bg);
   color: var(--fg);
+  font: inherit;
+  font-size: 13px;
   resize: vertical;
 }
 .pop-hint {
-  font-size: 12px;
+  margin: 6px 0 0;
   color: var(--muted);
-  line-height: 1.4;
-  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.pop-switch:focus-visible,
+.pop-radio:focus-visible,
+.pop-check input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .pop-footer {
-  padding: 10px 16px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
+  padding: 10px 16px 14px;
   color: var(--muted);
+  font-size: 11px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop-switch,
+  .pop-switch::before {
+    transition: none;
+  }
 }

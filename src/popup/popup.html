@@ -11,60 +11,90 @@
       <h1>YouTube Feed Blocker</h1>
     </header>
 
-    <section class="pop-section">
-      <label class="pop-switch">
-        <input type="checkbox" id="shortsBlocking" />
-        <span class="pop-switch__label">
-          Block Shorts everywhere
-          <small>Hides the Shorts tab, shelves and sidebar link, and sends
-            <code>/shorts</code> links to the normal player.</small>
-        </span>
-      </label>
-    </section>
+    <main>
+      <section class="pop-section" aria-labelledby="hideTitle">
+        <h2 id="hideTitle" class="pop-title">What should we hide?</h2>
+        <div class="pop-card">
+          <label class="pop-toggle">
+            <span class="pop-toggle__text"><strong>Home feed</strong><small>The endless grid on the front page</small></span>
+            <input type="checkbox" class="pop-switch" role="switch" data-setting="hideHomeFeed" />
+          </label>
+          <label class="pop-toggle">
+            <span class="pop-toggle__text"><strong>Shorts</strong><small>Vertical videos, wherever they appear</small></span>
+            <input type="checkbox" class="pop-switch" role="switch" data-setting="shortsBlocking" />
+          </label>
+          <label class="pop-toggle">
+            <span class="pop-toggle__text"><strong>Up next</strong><small>Suggestions beside and after a video</small></span>
+            <input type="checkbox" class="pop-switch" role="switch" data-setting="hideUpNext" />
+          </label>
+          <label class="pop-toggle">
+            <span class="pop-toggle__text"><strong>Autoplay</strong><small>The next video starting on its own</small></span>
+            <input type="checkbox" class="pop-switch" role="switch" data-setting="blockAutoplay" />
+          </label>
+          <label class="pop-toggle">
+            <span class="pop-toggle__text"><strong>Comments</strong><small>Below every video</small></span>
+            <input type="checkbox" class="pop-switch" role="switch" data-setting="hideComments" />
+          </label>
+        </div>
+      </section>
 
-    <section class="pop-section">
-      <h2 class="pop-section__title">Home feed</h2>
-      <div class="pop-radios" role="radiogroup" aria-label="Home feed mode">
-        <label class="pop-radio">
-          <input type="radio" name="feedMode" value="blank" />
-          <span><strong>Blank</strong><small>Empty, calm home page.</small></span>
-        </label>
-        <label class="pop-radio">
-          <input type="radio" name="feedMode" value="widgets" />
-          <span><strong>Productivity widgets</strong><small>To-do list, focus timer, a daily quote.</small></span>
-        </label>
-        <label class="pop-radio">
-          <input type="radio" name="feedMode" value="ai" />
-          <span><strong>AI-curated</strong><small>Describe what you want to see. <em>Preview — not wired up yet.</em></small></span>
-        </label>
+      <div id="feedSections">
+        <section class="pop-section" aria-labelledby="peekTitle">
+          <h2 id="peekTitle" class="pop-title">How hard should it be to peek?</h2>
+          <div class="pop-options" role="radiogroup" aria-labelledby="peekTitle">
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="peekLevel" value="pause" />
+              <span><strong>Pause</strong><small>Wait 10 seconds before the feed opens</small></span>
+            </label>
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="peekLevel" value="reason" />
+              <span><strong>Pause and say why</strong><small>Type what you came for, then wait</small></span>
+            </label>
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="peekLevel" value="none" />
+              <span><strong>No peeking</strong><small>The feed stays hidden. Search and subscriptions still work</small></span>
+            </label>
+          </div>
+        </section>
+
+        <section class="pop-section" aria-labelledby="insteadTitle">
+          <h2 id="insteadTitle" class="pop-title">Instead of the feed</h2>
+          <div class="pop-options" role="radiogroup" aria-labelledby="insteadTitle">
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="feedMode" value="blank" />
+              <span><strong>Blank</strong><small>A calm, empty home page</small></span>
+            </label>
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="feedMode" value="widgets" />
+              <span><strong>Focus widgets</strong><small>To-do list, focus timer and a daily quote</small></span>
+            </label>
+            <label class="pop-option">
+              <input type="radio" class="pop-radio" name="feedMode" value="ai" />
+              <span><strong>AI-curated</strong><small>Describe the feed you want. Preview only, nothing is filtered yet</small></span>
+            </label>
+          </div>
+
+          <div class="pop-sub" id="widgetOptions" hidden>
+            <label class="pop-check"><input type="checkbox" id="w_todo" /> To-do list</label>
+            <label class="pop-check"><input type="checkbox" id="w_timer" /> Focus timer</label>
+            <label class="pop-check"><input type="checkbox" id="w_quote" /> Daily quote</label>
+          </div>
+
+          <div class="pop-sub" id="aiOptions" hidden>
+            <label class="pop-field-label" for="aiInstruction">Feed instruction</label>
+            <textarea
+              id="aiInstruction"
+              rows="3"
+              maxlength="500"
+              placeholder='e.g. "Only in-depth coding tutorials and conference talks. No clickbait, no reactions, no news."'
+            ></textarea>
+            <p class="pop-hint">Saved now. Filtering arrives in a later version.</p>
+          </div>
+        </section>
       </div>
-    </section>
+    </main>
 
-    <section class="pop-section pop-conditional" id="widgetOptions" hidden>
-      <h2 class="pop-section__title">Widgets to show</h2>
-      <label class="pop-check"><input type="checkbox" id="w_todo" /> To-do list</label>
-      <label class="pop-check"><input type="checkbox" id="w_timer" /> Focus timer</label>
-      <label class="pop-check"><input type="checkbox" id="w_quote" /> Daily quote</label>
-    </section>
-
-    <section class="pop-section pop-conditional" id="aiOptions" hidden>
-      <h2 class="pop-section__title">Feed instruction</h2>
-      <textarea
-        id="aiInstruction"
-        rows="4"
-        maxlength="500"
-        placeholder='e.g. "Only in-depth coding tutorials and conference talks. No clickbait, no reactions, no news."'
-      ></textarea>
-      <p class="pop-hint">
-        Saved now, applied later. The classifier runs through a backend service
-        that isn't built yet, so nothing is filtered by AI in this build.
-      </p>
-    </section>
-
-    <footer class="pop-footer">
-      <span id="version"></span>
-      <span>Sideload build — not on the Web Store</span>
-    </footer>
+    <footer class="pop-footer"><span id="version"></span></footer>
 
     <script src="../lib/defaults.js"></script>
     <script src="../lib/storage.js"></script>
