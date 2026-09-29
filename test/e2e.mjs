@@ -260,6 +260,114 @@ try {
     JSON.stringify(playlist)
   );
 
+  // ---------- v0.2: home feed toggle and peeking ----------
+  // setSettings opens and closes a helper tab, which can leave the YouTube tab
+  // in the background, and the countdown (correctly) pauses in background tabs.
+  const goHome = async () => {
+    await yt.bringToFront();
+    await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
+    await yt.waitForSelector("#yfb-panel", { timeout: 20000 }).catch(() => {});
+    await yt.waitForTimeout(1500);
+  };
+  const feedRevealed = () =>
+    yt.evaluate(
+      () => !document.documentElement.classList.contains("yfb-home-replaced") && !document.getElementById("yfb-panel")
+    );
+  // Client-side (SPA) navigations, so the content script keeps its state.
+  const spaToSearch = async () => {
+    await yt.fill('input[name="search_query"]', "css grid");
+    await yt.press('input[name="search_query"]', "Enter");
+    await yt.waitForURL(/\/results/, { timeout: 15000 }).catch(() => {});
+    await yt.waitForTimeout(2000);
+  };
+  const spaToHome = async () => {
+    await yt.evaluate(() => document.querySelector("a#logo, ytd-topbar-logo-renderer a")?.click());
+    await yt.waitForTimeout(3000);
+  };
+
+  // Pause level: countdown, reveal, and the pause returns after leaving Home.
+  await setSettings(extId, { peekLevel: "pause" });
+  await goHome();
+  await yt.click("#yfb-panel .yfb-peek__link");
+  const countText = await yt.textContent("#yfb-panel .yfb-peek__count").catch(() => null);
+  log("pause: countdown starts at 10 seconds", /10 seconds/.test(countText || ""), countText);
+
+  // An unrelated setting change must not reset a running countdown.
+  await setSettings(extId, { peekLevel: "pause", hideComments: true });
+  await yt.bringToFront();
+  await yt.waitForTimeout(1000);
+  const stillCounting = await yt.$("#yfb-panel .yfb-peek__count");
+  log("unrelated setting change keeps the countdown running", !!stillCounting);
+
+  await yt.waitForTimeout(10500);
+  log("pause: real feed shows after the countdown", await feedRevealed());
+
+  await spaToSearch();
+  await spaToHome();
+  const pauseBack = await yt.evaluate(
+    () => location.pathname === "/" && !!document.querySelector("#yfb-panel .yfb-peek__link")
+  );
+  log("leaving Home and coming back brings the pause back", pauseBack);
+
+  // Switching tabs pauses the countdown.
+  await yt.click("#yfb-panel .yfb-peek__link");
+  const other = await ctx.newPage();
+  await other.goto("about:blank");
+  await other.bringToFront();
+  await other.waitForTimeout(12000);
+  await yt.bringToFront();
+  const revealedWhileHidden = await feedRevealed();
+  log("countdown pauses while the tab is hidden", !revealedWhileHidden);
+  await other.close();
+  await yt.waitForTimeout(11000);
+  log("countdown resumes when the tab is visible again", await feedRevealed());
+
+  // Reason level: validation, never mind, banner, HTML stays text, close.
+  await setSettings(extId, { peekLevel: "reason" });
+  await goHome();
+  await yt.click("#yfb-panel .yfb-peek__link");
+  await yt.click("#yfb-panel .yfb-peek__cancel");
+  log("never mind returns to the link", !!(await yt.$("#yfb-panel .yfb-peek__link")));
+
+  await yt.click("#yfb-panel .yfb-peek__link");
+  await yt.fill("#yfb-peek-reason", "  a ");
+  await yt.click('#yfb-panel .yfb-peek__form button[type="submit"]');
+  const reasonError = await yt.textContent("#yfb-panel .yfb-peek__error");
+  const countingEarly = await yt.$("#yfb-panel .yfb-peek__count");
+  log("reason: too-short reason is rejected", !!reasonError && !countingEarly, reasonError);
+
+  await yt.fill("#yfb-peek-reason", "<b>css</b> grid layouts");
+  await yt.click('#yfb-panel .yfb-peek__form button[type="submit"]');
+  await yt.waitForTimeout(11500);
+  log("reason: real feed shows after the countdown", await feedRevealed());
+
+  await spaToSearch();
+  const banner = await yt.evaluate(() => {
+    const b = document.getElementById("yfb-reason-banner");
+    return b ? { text: b.querySelector(".yfb-reason__text").textContent, injected: !!b.querySelector(".yfb-reason__text b") } : null;
+  });
+  log(
+    "banner shows the reason on the next page",
+    !!banner && banner.text === "You came for: <b>css</b> grid layouts",
+    banner && banner.text
+  );
+  log("reason is shown as text, not HTML", !!banner && !banner.injected);
+  await yt.click("#yfb-reason-banner .yfb-reason__close");
+  log("closing the banner removes it", !(await yt.$("#yfb-reason-banner")));
+
+  // No peeking: no link at all.
+  await setSettings(extId, { peekLevel: "none" });
+  await goHome();
+  log(
+    "no peeking: panel without a peek link",
+    !!(await yt.$("#yfb-panel")) && !(await yt.$("#yfb-panel .yfb-peek__link"))
+  );
+
+  // Home feed toggle off shows the real feed live.
+  await setSettings(extId, { hideHomeFeed: false });
+  await yt.waitForTimeout(1500);
+  log("home feed toggle off shows the real feed, no reload", await feedRevealed());
+
   // per-mode screenshots
   for (const mode of ["widgets", "ai", "blank"]) {
     await setSettings(extId, {

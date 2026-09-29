@@ -181,7 +181,7 @@
     const dayIndex = Math.floor(Date.now() / 86400000) % quotes.length;
     const q = quotes[dayIndex];
     const block = el("blockquote", "yfb-quote__text", q.text);
-    const by = el("cite", "yfb-quote__by", "— " + q.by);
+    const by = el("cite", "yfb-quote__by", q.by);
     card.append(block, by);
     return card;
   }

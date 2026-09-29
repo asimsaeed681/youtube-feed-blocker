@@ -35,6 +35,7 @@
         "src/lib/storage.js",
         "src/content/shorts-blocker.js",
         "src/content/watch-page.js",
+        "src/content/reason-banner.js",
         "src/content/feed-widgets.js",
         "src/content/feed-replacer.js"
       ]

@@ -253,3 +253,114 @@ html[dark] #yfb-panel {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- peeking: link, reason form, countdown --- */
+#yfb-panel .yfb-peek {
+  margin-top: 32px;
+  text-align: center;
+}
+#yfb-panel .yfb-peek__link,
+#yfb-panel .yfb-peek__cancel {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--yfb-subtext);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+#yfb-panel .yfb-peek__link:hover,
+#yfb-panel .yfb-peek__cancel:hover {
+  color: var(--yfb-text);
+}
+#yfb-panel .yfb-peek__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+#yfb-panel .yfb-peek__label {
+  flex-basis: 100%;
+  font-size: 15px;
+  font-weight: 500;
+}
+#yfb-panel .yfb-peek__input {
+  flex: 1 1 240px;
+  padding: 8px 10px;
+  border: 1px solid var(--yfb-border);
+  border-radius: 8px;
+  background: var(--yfb-input-bg);
+  color: var(--yfb-text);
+  font: inherit;
+  font-size: 14px;
+}
+#yfb-panel .yfb-peek__error {
+  flex-basis: 100%;
+  min-height: 1em;
+  margin: 0;
+  color: #d9362b;
+  font-size: 13px;
+}
+#yfb-panel .yfb-peek__count {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+#yfb-panel .yfb-peek__link:focus-visible,
+#yfb-panel .yfb-peek__cancel:focus-visible,
+#yfb-panel .yfb-peek__input:focus-visible {
+  outline: 2px solid #d9362b;
+  outline-offset: 2px;
+}
+
+/* --- "You came for" reminder (reason-banner.js). It sits outside #yfb-panel on
+   every page, so it carries its own fixed colours that read on both YouTube
+   themes, matching the popup's dark card and red accent. --- */
+#yfb-reason-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(640px, calc(100vw - 32px));
+  padding: 6px 6px 6px 14px;
+  border-left: 3px solid #d9362b;
+  border-radius: 8px;
+  background: #1f1d1b;
+  color: #f3f1ee;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font: 14px/1.35 "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+#yfb-reason-banner .yfb-reason__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#yfb-reason-banner .yfb-reason__close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #a8a29c;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+#yfb-reason-banner .yfb-reason__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3f1ee;
+}
+#yfb-reason-banner .yfb-reason__close:focus-visible {
+  outline: 2px solid #d9362b;
+  outline-offset: 1px;
+}
