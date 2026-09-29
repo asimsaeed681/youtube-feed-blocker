@@ -1,12 +1,13 @@
 /**
  * Shared constants + default settings.
- * Loaded first in the content-script list and also via <script> in the popup,
- * so everything hangs off a single global namespace (window.YFB).
+ * Loaded first in the content-script list, via <script> in the popup, and via
+ * importScripts() in the service worker, so everything hangs off globalThis.YFB
+ * (which is window.YFB in pages and content scripts).
  */
 (function () {
   "use strict";
 
-  const YFB = (window.YFB = window.YFB || {});
+  const YFB = (globalThis.YFB = globalThis.YFB || {});
 
   YFB.FEED_MODES = Object.freeze({
     BLANK: "blank",
@@ -14,12 +15,31 @@
     AI: "ai",
   });
 
+  // How much friction stands between the user and the real home feed.
+  YFB.PEEK_LEVELS = Object.freeze({
+    PAUSE: "pause",
+    REASON: "reason",
+    NONE: "none",
+  });
+
+  YFB.PEEK_SECONDS = 10;
+  YFB.MIN_REASON_LENGTH = 3;
+
   YFB.DEFAULT_SETTINGS = Object.freeze({
     shortsBlocking: true,
+    hideHomeFeed: true,
+    hideUpNext: true,
+    blockAutoplay: true,
+    hideComments: false,
+    peekLevel: YFB.PEEK_LEVELS.REASON,
     feedMode: YFB.FEED_MODES.WIDGETS,
     aiInstruction: "",
     widgets: Object.freeze({ todo: true, timer: true, quote: true }),
   });
+
+  YFB.isValidReason = function isValidReason(value) {
+    return typeof value === "string" && value.trim().length >= YFB.MIN_REASON_LENGTH;
+  };
 
   // A small, tasteful default rotation. Kept short on purpose.
   YFB.QUOTES = Object.freeze([

@@ -9,26 +9,31 @@
   const YFB = (window.YFB = window.YFB || {});
   const KEY = YFB.STORAGE_KEY;
 
+  const bool = (value, fallback) => (typeof value === "boolean" ? value : fallback);
+  const oneOf = (value, allowed, fallback) =>
+    Object.values(allowed).includes(value) ? value : fallback;
+
   function mergeWithDefaults(stored) {
     const d = YFB.DEFAULT_SETTINGS;
     const s = stored || {};
     return {
-      shortsBlocking:
-        typeof s.shortsBlocking === "boolean" ? s.shortsBlocking : d.shortsBlocking,
-      feedMode: Object.values(YFB.FEED_MODES).includes(s.feedMode)
-        ? s.feedMode
-        : d.feedMode,
+      shortsBlocking: bool(s.shortsBlocking, d.shortsBlocking),
+      hideHomeFeed: bool(s.hideHomeFeed, d.hideHomeFeed),
+      hideUpNext: bool(s.hideUpNext, d.hideUpNext),
+      blockAutoplay: bool(s.blockAutoplay, d.blockAutoplay),
+      hideComments: bool(s.hideComments, d.hideComments),
+      peekLevel: oneOf(s.peekLevel, YFB.PEEK_LEVELS, d.peekLevel),
+      feedMode: oneOf(s.feedMode, YFB.FEED_MODES, d.feedMode),
       aiInstruction:
         typeof s.aiInstruction === "string" ? s.aiInstruction : d.aiInstruction,
       widgets: {
-        todo: typeof s.widgets?.todo === "boolean" ? s.widgets.todo : d.widgets.todo,
-        timer:
-          typeof s.widgets?.timer === "boolean" ? s.widgets.timer : d.widgets.timer,
-        quote:
-          typeof s.widgets?.quote === "boolean" ? s.widgets.quote : d.widgets.quote,
+        todo: bool(s.widgets?.todo, d.widgets.todo),
+        timer: bool(s.widgets?.timer, d.widgets.timer),
+        quote: bool(s.widgets?.quote, d.widgets.quote),
       },
     };
   }
+  YFB.mergeWithDefaults = mergeWithDefaults;
 
   YFB.getSettings = function getSettings() {
     return new Promise((resolve) => {
@@ -46,7 +51,7 @@
     });
   };
 
-  YFB.setSettings = async function setSettings(patch) {
+  async function writePatch(patch) {
     const current = await YFB.getSettings();
     const next = mergeWithDefaults({
       ...current,
@@ -56,6 +61,16 @@
     return new Promise((resolve) => {
       chrome.storage.sync.set({ [KEY]: next }, () => resolve(next));
     });
+  }
+
+  // setSettings is read-modify-write, so two quick popup clicks could each read
+  // the old object and the second write would drop the first change. Chaining
+  // every write onto the previous one makes them apply in order.
+  let writeQueue = Promise.resolve();
+  YFB.setSettings = function setSettings(patch) {
+    const run = writeQueue.then(() => writePatch(patch));
+    writeQueue = run.catch(() => {});
+    return run;
   };
 
   /**

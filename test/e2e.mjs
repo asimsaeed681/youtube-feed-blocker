@@ -90,6 +90,11 @@ async function setSettings(extId, patch) {
     (s) => new Promise((res) => chrome.storage.sync.set({ settings: s }, res)),
     {
       shortsBlocking: true,
+      hideHomeFeed: true,
+      hideUpNext: true,
+      blockAutoplay: true,
+      hideComments: false,
+      peekLevel: "reason",
       feedMode: "widgets",
       aiInstruction: "",
       widgets: { todo: true, timer: true, quote: true },
@@ -115,6 +120,20 @@ try {
   });
   log("extension loads unpacked + id resolved", !!extId, extId || "not found");
   if (!extId) throw new Error("no extension id");
+
+  // The service worker seeds defaults on install. Read them before any test
+  // overwrites settings, to prove background.js loads lib/defaults.js.
+  const seedPage = await ctx.newPage();
+  await seedPage.goto(`chrome-extension://${extId}/src/popup/popup.html`);
+  const seeded = await seedPage.evaluate(
+    () => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings || null)))
+  );
+  await seedPage.close();
+  log(
+    "install seeds full v0.2 defaults",
+    !!seeded && seeded.hideUpNext === true && seeded.peekLevel === "reason",
+    JSON.stringify(seeded)
+  );
 
   const yt = await ctx.newPage();
   await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
