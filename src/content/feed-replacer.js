@@ -114,6 +114,10 @@
       status.textContent = value
         ? "Saved. Once filtering is built, your home feed will be matched to this."
         : "Cleared.";
+      // aiInstruction is part of renderKey, so the storage.onChanged echo of
+      // this same write would otherwise see a stale renderKey and re-render
+      // the panel, wiping the status line just set above.
+      panel.dataset.renderKey = renderKey(settings);
     });
 
     wrap.appendChild(form);
