@@ -203,6 +203,63 @@ try {
   log("feedMode change applies live, no reload", live.panelMode === "blank" && live.blank, "mode=" + live.panelMode);
   log("shortsBlocking off applies live", live.htmlClasses.includes("yfb-shorts-allowed"));
 
+  // ---------- v0.2: watch page ----------
+  const display = (page, sel) =>
+    page.evaluate((s) => {
+      const n = document.querySelector(s);
+      return n ? getComputedStyle(n).display : "missing";
+    }, sel);
+
+  await setSettings(extId, {});
+  await yt.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ", { waitUntil: "domcontentloaded" });
+  await yt.waitForSelector("ytd-watch-flexy #related", { state: "attached", timeout: 20000 }).catch(() => {});
+  await yt.waitForTimeout(3000);
+  const relatedHidden = await display(yt, "ytd-watch-flexy #related");
+  log("Up next sidebar hidden", relatedHidden === "none", relatedHidden);
+
+  const autoplay = await yt
+    .waitForFunction(
+      () => document.querySelector(".ytp-autonav-toggle-button")?.getAttribute("aria-checked") === "false",
+      null,
+      { timeout: 12000 }
+    )
+    .then(() => "false")
+    .catch(() =>
+      yt.evaluate(() => document.querySelector(".ytp-autonav-toggle-button")?.getAttribute("aria-checked") ?? "no-toggle")
+    );
+  log("autoplay toggle ends up off", autoplay === "false", autoplay);
+
+  await yt.evaluate(() => window.scrollBy(0, 800));
+  await setSettings(extId, { hideComments: true });
+  await yt.waitForTimeout(800);
+  const commentsHidden = await display(yt, "ytd-comments#comments");
+  log("comments hidden when on", commentsHidden === "none", commentsHidden);
+
+  await setSettings(extId, { hideComments: false, hideUpNext: false });
+  await yt.waitForTimeout(800);
+  const commentsBack = await display(yt, "ytd-comments#comments");
+  const relatedBack = await display(yt, "ytd-watch-flexy #related");
+  log(
+    "comments and Up next come back live, no reload",
+    !["none", "missing"].includes(commentsBack) && !["none", "missing"].includes(relatedBack),
+    `comments=${commentsBack} related=${relatedBack}`
+  );
+
+  // A Mix is a playlist every video has, so this URL always shows a playlist panel.
+  await setSettings(extId, {});
+  await yt.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ", { waitUntil: "domcontentloaded" });
+  await yt.waitForSelector("ytd-playlist-panel-renderer#playlist", { state: "attached", timeout: 20000 }).catch(() => {});
+  await yt.waitForTimeout(3000);
+  const playlist = await yt.evaluate(() => {
+    const p = document.querySelector("ytd-playlist-panel-renderer#playlist");
+    return p ? { display: getComputedStyle(p).display, height: Math.round(p.getBoundingClientRect().height) } : null;
+  });
+  log(
+    "playlist panel stays visible with Up next hidden",
+    !!playlist && playlist.display !== "none" && playlist.height > 0,
+    JSON.stringify(playlist)
+  );
+
   // per-mode screenshots
   for (const mode of ["widgets", "ai", "blank"]) {
     await setSettings(extId, {

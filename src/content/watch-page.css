@@ -1,0 +1,30 @@
+/*
+ * Watch-page hiding. Each block is keyed on a class that watch-page.js toggles
+ * on <html> from settings, so turning a setting off reveals the element again
+ * with no reload.
+ *
+ * YouTube selectors (update here when YouTube renames things):
+ *   #related            suggestions column; also moves under the video in narrow layouts
+ *   .html5-endscreen    the grid of videos over the player when a video ends
+ *   .ytp-ce-element     end-screen cards the creator places in the last seconds
+ *   .ytp-autonav-endscreen-countdown-overlay   the "Up next in 5" overlay
+ *   ytd-comments#comments                      the comments section
+ * The playlist panel (ytd-playlist-panel-renderer#playlist) is a sibling of
+ * #related, so hiding #related leaves playlists usable.
+ */
+
+html.yfb-hide-upnext ytd-watch-flexy #related,
+html.yfb-hide-upnext .html5-video-player .html5-endscreen,
+html.yfb-hide-upnext .html5-video-player .ytp-ce-element,
+html.yfb-hide-upnext .html5-video-player .ytp-autonav-endscreen-countdown-overlay {
+  display: none !important;
+}
+
+/* Backstop for autoplay: even if the toggle click misses, no countdown shows. */
+html.yfb-block-autoplay .html5-video-player .ytp-autonav-endscreen-countdown-overlay {
+  display: none !important;
+}
+
+html.yfb-hide-comments ytd-comments#comments {
+  display: none !important;
+}
