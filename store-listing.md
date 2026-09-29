@@ -26,7 +26,7 @@ YouTube Feed Blocker
 ```
 Hide YouTube Shorts, the home feed, Up next, autoplay and comments. Peeking at your feed takes a pause you choose.
 ```
-(113 characters.)
+(114 characters.)
 
 ## Detailed description
 
