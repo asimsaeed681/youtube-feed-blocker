@@ -8,7 +8,9 @@ visibility: reachable by direct link, not shown in search or category browsing.
 ## Single purpose (required by Google's review)
 
 > YouTube Feed Blocker has one purpose: to reduce distraction on YouTube by
-> removing Shorts and letting the user replace the home feed with a calmer view.
+> hiding distracting page elements (the home feed, Shorts, suggested videos,
+> autoplay and comments) and making the home feed take a deliberate pause to
+> open.
 
 Keep this phrasing (or close to it) consistent between the console's "single
 purpose" field and the description below — reviewers compare them.
@@ -56,8 +58,8 @@ a preview of an upcoming AI-curated feed.
 PRIVACY
 No data is collected. No network requests. Your settings are stored in your
 browser (chrome.storage) and synced only across your own Chrome by Chrome
-itself. The reason you type when peeking stays in that tab's memory and is
-never saved or sent anywhere. Full policy:
+itself. The reason you type when peeking is only kept while that tab is open.
+The extension never saves it or sends it anywhere. Full policy:
 https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
 
 ABOUT "AI-CURATED" MODE
@@ -91,17 +93,18 @@ English
 
 - `storage`
   ```
-  Stores the user's chosen feed mode, Shorts-blocking on/off state, optional
-  feed-instruction text, and widget preferences so they persist between sessions
-  and sync across the user's own Chrome installations. No data is transmitted;
-  storage is local to the browser.
+  Stores which page elements are hidden (home feed, Shorts, Up next, autoplay,
+  comments), the peek level, the feed mode, optional feed-instruction text,
+  widget preferences, and to-do items in chrome.storage.local. No data is
+  transmitted.
   ```
 
 - Host permission `https://www.youtube.com/*` (from the content script match)
   ```
-  The extension's only function is modifying youtube.com pages - hiding Shorts
-  UI and replacing the home feed. It runs exclusively on www.youtube.com and
-  makes no network requests.
+  The extension's only function is modifying youtube.com pages: hiding the home
+  feed, Shorts, suggested videos, autoplay and comments, and showing its own
+  panel in place of the home feed. It runs only on www.youtube.com and makes no
+  network requests.
   ```
 
 - Remote code: **No**, the extension does not use remote code.
@@ -177,9 +180,9 @@ English
 ### If review pushes back
 
 Most likely snags for this extension and the pre-written answer:
-- *"Single purpose unclear"* -> point to the single-purpose text; the two
-  features (remove Shorts, replace feed) are one purpose: reducing YouTube
-  distraction.
+- *"Single purpose unclear"* -> point to the single-purpose text; every
+  feature (hiding the home feed, Shorts, suggested videos, autoplay, and
+  comments) is one purpose: reducing YouTube distraction.
 - *"Broad host permissions"* -> it's a single specific host, `www.youtube.com`,
   and there are no network requests; that's in the justification.
 - *"Privacy policy"* -> the hosted URL; it states no collection, no transmission.

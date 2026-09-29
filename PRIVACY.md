@@ -1,7 +1,7 @@
 # Privacy Policy — YouTube Feed Blocker
 
-**Last updated:** 2026-08-30
-**Applies to:** YouTube Feed Blocker Chrome extension, version 0.1.x
+**Last updated:** 2026-09-30
+**Applies to:** YouTube Feed Blocker Chrome extension, versions 0.1.x and 0.2.x
 
 ## Summary
 
@@ -13,12 +13,15 @@ browser.
 
 | Data | Where it is stored | Who can read it |
 |---|---|---|
-| Your selected feed mode (blank / widgets / AI), Shorts-blocking on/off, and widget preferences | `chrome.storage.sync` | Only you. Chrome syncs it between your own signed-in Chrome installations. The developer has no access. |
+| Your selected feed mode (blank / widgets / AI), which page elements are hidden (home feed, Shorts, Up next, autoplay, comments), peek level, Shorts-blocking on/off, and widget preferences | `chrome.storage.sync` | Only you. Chrome syncs it between your own signed-in Chrome installations. The developer has no access. |
 | The optional free-text "feed instruction" you type in AI mode | `chrome.storage.sync` | Only you (as above). In this version it is never sent anywhere — it is stored for a feature that is not yet built. |
 | Your to-do list items and their checked state | `chrome.storage.local` | Only you. Never leaves the device it was typed on. |
 
 No other data is stored. There is no account, no login, and no identifier of
 any kind.
+
+The reason you type when peeking is kept only in memory while that tab is
+open; the extension never saves it or sends it anywhere.
 
 ## What the extension does NOT do
 
@@ -57,4 +60,4 @@ update is released.
 
 ## Contact
 
-Questions about this policy: [aasim.saeed681@gmail.com](mailto:aasim.saeed681@gmail.com)
+Questions about this policy: [aasim.saeed063@gmail.com](mailto:aasim.saeed063@gmail.com)
