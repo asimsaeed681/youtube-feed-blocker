@@ -35,31 +35,47 @@
   }
   YFB.mergeWithDefaults = mergeWithDefaults;
 
-  YFB.getSettings = function getSettings() {
-    return new Promise((resolve) => {
+  // Rejects on a storage error instead of papering over it, so a caller that
+  // needs the real current settings (writePatch) can't merge onto guessed
+  // defaults. getSettings() below is the reader-facing wrapper that turns a
+  // rejection back into the default-settings fallback.
+  function readSettingsOrThrow() {
+    return new Promise((resolve, reject) => {
       try {
         chrome.storage.sync.get(KEY, (res) => {
           if (chrome.runtime.lastError) {
-            resolve(mergeWithDefaults(null));
+            reject(chrome.runtime.lastError);
             return;
           }
           resolve(mergeWithDefaults(res && res[KEY]));
         });
       } catch (e) {
-        resolve(mergeWithDefaults(null));
+        reject(e);
       }
     });
+  }
+
+  YFB.getSettings = function getSettings() {
+    return readSettingsOrThrow().catch(() => mergeWithDefaults(null));
   };
 
   async function writePatch(patch) {
-    const current = await YFB.getSettings();
+    // A failed read must not fall through to defaults here: merging a patch
+    // onto defaults would write over the user's real (unread) settings.
+    const current = await readSettingsOrThrow();
     const next = mergeWithDefaults({
       ...current,
       ...patch,
       widgets: { ...current.widgets, ...(patch && patch.widgets) },
     });
-    return new Promise((resolve) => {
-      chrome.storage.sync.set({ [KEY]: next }, () => resolve(next));
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.set({ [KEY]: next }, () => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+          return;
+        }
+        resolve(next);
+      });
     });
   }
 

@@ -16,15 +16,44 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const store = {};
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 globalThis.window = globalThis;
+
+// One-shot failure switches for the next get/set call. Chrome reports a
+// failed storage call by setting chrome.runtime.lastError during the
+// callback, then clearing it - mirror that exactly here.
+let failNextGet = false;
+let failNextSet = false;
+
 globalThis.chrome = {
   runtime: {},
   storage: {
     sync: {
       get(key, cb) {
-        setTimeout(() => cb({ [key]: clone(store[key]) }), 5);
+        setTimeout(() => {
+          if (failNextGet) {
+            failNextGet = false;
+            chrome.runtime.lastError = { message: "simulated get failure" };
+            try {
+              cb({});
+            } finally {
+              delete chrome.runtime.lastError;
+            }
+            return;
+          }
+          cb({ [key]: clone(store[key]) });
+        }, 5);
       },
       set(obj, cb) {
         setTimeout(() => {
+          if (failNextSet) {
+            failNextSet = false;
+            chrome.runtime.lastError = { message: "simulated set failure" };
+            try {
+              if (cb) cb();
+            } finally {
+              delete chrome.runtime.lastError;
+            }
+            return;
+          }
           Object.assign(store, clone(obj));
           if (cb) cb();
         }, 5);
@@ -86,6 +115,38 @@ const after = await YFB.getSettings();
 check("three concurrent setSettings calls all persist",
   after.hideComments === true && after.peekLevel === "none" && after.widgets.quote === false,
   JSON.stringify(after));
+
+// --- F5: storage error handling ---
+failNextSet = true;
+let write1Rejected = false;
+try {
+  await YFB.setSettings({ peekLevel: "pause" });
+} catch {
+  write1Rejected = true;
+}
+check("a failed write rejects instead of resolving", write1Rejected === true);
+
+failNextGet = true;
+let write2Rejected = false;
+try {
+  await YFB.setSettings({ peekLevel: "none" });
+} catch {
+  write2Rejected = true;
+}
+const afterFailedRead = await YFB.getSettings();
+check(
+  "a failed read does not overwrite settings with defaults",
+  write2Rejected === true && afterFailedRead.hideComments === true,
+  JSON.stringify(afterFailedRead)
+);
+
+await YFB.setSettings({ hideComments: false });
+const afterQueueRecovery = await YFB.getSettings();
+check(
+  "the write queue keeps working after a failed write",
+  afterQueueRecovery.hideComments === false,
+  JSON.stringify(afterQueueRecovery)
+);
 
 console.log(`\n${total - failed}/${total} passed`);
 process.exit(failed ? 1 : 0);
