@@ -286,6 +286,22 @@ try {
   };
 
   // Pause level: countdown, reveal, and the pause returns after leaving Home.
+  // Playwright keeps every page in this session visible and focused -
+  // bringToFront() never toggles document.hidden here - so the "tab hidden"
+  // check below drives document.hidden directly, via CDP, inside the content
+  // script's own isolated world instead of relying on a real tab switch.
+  // Execution contexts are only reported for ones created after Runtime.enable,
+  // so this must run before the goHome() navigation right below.
+  const cdp = await ctx.newCDPSession(yt);
+  await cdp.send("Runtime.enable");
+  let isolatedContext = null;
+  cdp.on("Runtime.executionContextCreated", (e) => {
+    const c = e.context;
+    if (c.auxData && c.auxData.type === "isolated" && c.name === "YouTube Feed Blocker") {
+      isolatedContext = c;
+    }
+  });
+
   await setSettings(extId, { peekLevel: "pause" });
   await goHome();
   await yt.click("#yfb-panel .yfb-peek__link");
@@ -309,18 +325,28 @@ try {
   );
   log("leaving Home and coming back brings the pause back", pauseBack);
 
-  // Switching tabs pauses the countdown.
+  // Hiding the tab pauses the countdown. feed-replacer.js's countdown tick
+  // reads document.hidden from the extension's own isolated world, so we
+  // override it there directly - isolated-world wrappers are separate from
+  // the page's, so this can't leak into the page itself.
   await yt.click("#yfb-panel .yfb-peek__link");
-  const other = await ctx.newPage();
-  await other.goto("about:blank");
-  await other.bringToFront();
-  await other.waitForTimeout(12000);
-  await yt.bringToFront();
-  const revealedWhileHidden = await feedRevealed();
-  log("countdown pauses while the tab is hidden", !revealedWhileHidden);
-  await other.close();
+  if (!isolatedContext) {
+    throw new Error("could not find the extension's isolated execution context via CDP");
+  }
+  await cdp.send("Runtime.evaluate", {
+    contextId: isolatedContext.id,
+    expression: 'Object.defineProperty(document, "hidden", { configurable: true, get: () => true })',
+  });
+  await yt.waitForTimeout(12000);
+  log("countdown pauses while the tab is hidden", !(await feedRevealed()));
+
+  await cdp.send("Runtime.evaluate", {
+    contextId: isolatedContext.id,
+    expression: "delete document.hidden",
+  });
   await yt.waitForTimeout(11000);
   log("countdown resumes when the tab is visible again", await feedRevealed());
+  await cdp.detach();
 
   // Reason level: validation, never mind, banner, HTML stays text, close.
   await setSettings(extId, { peekLevel: "reason" });
