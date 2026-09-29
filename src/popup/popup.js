@@ -36,7 +36,10 @@
     els.w_todo.checked = settings.widgets.todo;
     els.w_timer.checked = settings.widgets.timer;
     els.w_quote.checked = settings.widgets.quote;
-    els.aiInstruction.value = settings.aiInstruction;
+    // Don't overwrite the textarea while the user is typing in it.
+    if (document.activeElement !== els.aiInstruction) {
+      els.aiInstruction.value = settings.aiInstruction;
+    }
     reflectConditionalSections(settings);
   }
 

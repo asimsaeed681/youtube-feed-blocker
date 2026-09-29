@@ -411,6 +411,26 @@ try {
     JSON.stringify(popInitial)
   );
 
+  // AI instruction autosave across typing.
+  await pop.click('label:has(input[name="feedMode"][value="ai"])');
+  await pop.waitForTimeout(300);
+  await pop.click("#aiInstruction");
+  await pop.keyboard.type("hello ");
+  await pop.waitForTimeout(700);
+  await pop.keyboard.type("world");
+  await pop.waitForTimeout(700);
+  const aiValue = await pop.evaluate(() => document.getElementById("aiInstruction").value);
+  const aiStored = await pop.evaluate(
+    () => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings?.aiInstruction || "")))
+  );
+  log(
+    "AI instruction box keeps typing across autosave",
+    aiValue === "hello world" && aiStored === "hello world",
+    `textarea="${aiValue}" stored="${aiStored}"`
+  );
+  await pop.click('label:has(input[name="feedMode"][value="widgets"])');
+  await pop.waitForTimeout(300);
+
   // Three quick clicks: all three changes must be saved.
   await pop.click('label:has(input[name="peekLevel"][value="none"])');
   await pop.click('label:has(input[data-setting="hideComments"])');
@@ -428,7 +448,7 @@ try {
     "peek and feed sections hide while the home feed is shown",
     await pop.evaluate(() => document.getElementById("feedSections").hidden === true)
   );
-  const popupDashes = await pop.evaluate(() => document.body.innerText.includes("—"));
+  const popupDashes = await pop.evaluate(() => document.body.textContent.includes("—"));
   log("popup copy has no em dashes", !popupDashes);
 
   await pop.click('label:has(input[data-setting="hideHomeFeed"])');
