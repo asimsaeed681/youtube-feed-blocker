@@ -19,11 +19,19 @@
     blockAutoplay: "yfb-block-autoplay",
   });
 
-  // YouTube selector for the player's autoplay switch.
+  // YouTube selector for the player's autoplay switch; aria-checked lives on
+  // this inner div. Its click handler is a no-op though: the real listener
+  // is bound to the ancestor <button>, so a plain .click() on the div fires
+  // a bare "click" event that its tap/gesture recognizer ignores (verified:
+  // it never flips aria-checked). Clicking the button ancestor does flip it.
   const AUTOPLAY_TOGGLE = ".ytp-autonav-toggle-button";
   // The player builds its controls after navigation; poll briefly for them.
-  const AUTOPLAY_RETRY_MS = 500;
-  const AUTOPLAY_MAX_TRIES = 20;
+  const AUTOPLAY_POLL_MS = 500;
+  // Don't click on every poll tick: give YouTube's own re-render a moment to
+  // settle before checking again.
+  const AUTOPLAY_CLICK_SETTLE_MS = 1500;
+  // Bounded budget for the whole poll-and-click loop.
+  const AUTOPLAY_BUDGET_MS = 15000;
 
   const root = document.documentElement;
   let settings = YFB.DEFAULT_SETTINGS;
@@ -40,18 +48,18 @@
   function switchOffAutoplay() {
     if (!settings.blockAutoplay || location.pathname !== "/watch") return;
     const run = ++autoplayRun;
-    let tries = 0;
-    (function attempt() {
+    const deadline = Date.now() + AUTOPLAY_BUDGET_MS;
+    let lastClick = 0;
+    (function poll() {
       if (run !== autoplayRun || !settings.blockAutoplay) return;
       const toggle = document.querySelector(AUTOPLAY_TOGGLE);
       const state = toggle && toggle.getAttribute("aria-checked");
-      if (state === "true") {
-        toggle.click();
-        return;
-      }
       if (state === "false") return;
-      tries += 1;
-      if (tries < AUTOPLAY_MAX_TRIES) setTimeout(attempt, AUTOPLAY_RETRY_MS);
+      if (state === "true" && Date.now() - lastClick >= AUTOPLAY_CLICK_SETTLE_MS) {
+        (toggle.closest("button") || toggle).click();
+        lastClick = Date.now();
+      }
+      if (Date.now() < deadline) setTimeout(poll, AUTOPLAY_POLL_MS);
     })();
   }
 
