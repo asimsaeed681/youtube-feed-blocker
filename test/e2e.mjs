@@ -467,6 +467,9 @@ try {
     await yt.screenshot({ path: path.join(shotDir, `home-${mode}.png`) });
   }
   console.log(`\nscreenshots -> ${shotDir}`);
+} catch (e) {
+  console.error(e);
+  results.push({ pass: false });
 } finally {
   const failed = results.filter((r) => !r.pass).length;
   console.log(`\n${results.length - failed}/${results.length} passed`);
