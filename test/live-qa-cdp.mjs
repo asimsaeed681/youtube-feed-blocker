@@ -227,6 +227,32 @@ try {
     R.shortsRedirect = { from: `/shorts/${shortId}`, landedOn: yt.url(), redirected: new RegExp(`/watch\\?v=${shortId}`).test(yt.url()) };
   } else R.shortsRedirect = { error: "no /shorts/<id> link found while blocking was off" };
 
+  // ---------- v0.2: watch page and peek, signed in ----------
+  await setSettings({ feedMode: "widgets", hideUpNext: true, hideComments: true, blockAutoplay: true, peekLevel: "pause" });
+  if (vidId) {
+    await yt.goto(`https://www.youtube.com/watch?v=${vidId}`, { waitUntil: "domcontentloaded" });
+    await yt.waitForTimeout(6000);
+    await yt.evaluate(() => window.scrollTo(0, 1500)); await yt.waitForTimeout(3000);
+    R.v02_watch = await yt.evaluate(() => {
+      const d = (s) => { const n = document.querySelector(s); return n ? getComputedStyle(n).display : "missing"; };
+      return {
+        related: d("ytd-watch-flexy #related"),
+        comments: d("ytd-comments#comments"),
+        autoplay: document.querySelector(".ytp-autonav-toggle-button")?.getAttribute("aria-checked") ?? "no-toggle",
+      };
+    });
+    await yt.screenshot({ path: path.join(OUT, "watch-v02-hidden.png") });
+  } else R.v02_watch = { error: "no video id from subscriptions" };
+
+  await loadHome();
+  await yt.click("#yfb-panel .yfb-peek__link").catch(() => {});
+  await sleep(11500);
+  R.v02_peek = await yt.evaluate(() => ({
+    revealed: !document.documentElement.classList.contains("yfb-home-replaced") && !document.getElementById("yfb-panel"),
+    gridItems: document.querySelectorAll('ytd-browse[page-subtype="home"] ytd-rich-item-renderer').length,
+  }));
+  await yt.screenshot({ path: path.join(OUT, "home-v02-after-peek.png") });
+
   // restore a sane default for the user's continued manual poking
   await setSettings({ feedMode: "widgets", shortsBlocking: true });
 

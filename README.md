@@ -2,16 +2,17 @@
 
 A Manifest V3 Chrome extension that:
 
-1. **Kills Shorts** — hides the Shorts tab, shelves, and sidebar link across
-   `youtube.com`, and redirects any `/shorts/<id>` URL to the normal
-   `/watch?v=<id>` player. Works with YouTube's single-page navigation via a
-   `MutationObserver`.
-2. **Replaces the home feed** with one of three modes, chosen in the popup:
-   - **Blank** — a calm, empty home page.
-   - **Productivity widgets** — to-do list, focus timer, and a daily quote.
-   - **AI-curated** — type an instruction for the feed you want.
-     *Preview only in this build — the classifier backend is not wired up yet.*
-3. Persists all settings via `chrome.storage.sync`.
+1. **Hides what pulls you in**: the home feed, Shorts (tab, shelves, sidebar
+   link, and `/shorts/<id>` redirected to `/watch?v=<id>`), Up next (sidebar,
+   end screen, end cards; playlists stay), autoplay, and optionally comments.
+   Each is a switch in the popup and applies live.
+2. **Peeking with friction**: a "Show my feed anyway" link under the panel,
+   gated by a 10 second pause, a pause plus a typed reason (shown afterwards
+   as a "You came for" reminder), or no peeking at all. A peek lasts until you
+   leave the home page.
+3. **Replaces the home feed** with a blank page, productivity widgets, or an
+   AI-curated preview (no classifier backend yet).
+4. Persists all settings via `chrome.storage.sync`.
 
 You can load this build unpacked (below). It is being prepared for an
 **Unlisted** Chrome Web Store release (link-only, not searchable); see
@@ -42,6 +43,9 @@ src/
     shorts-blocker.js    Shorts UI removal + /shorts redirect + observer
     feed-widgets.js      to-do / timer / quote widgets
     feed-replacer.js     hides the real home grid, injects the panel
+    watch-page.css       Up next / autoplay / comments hiding (class-keyed)
+    watch-page.js        mirrors those settings to <html> classes, turns autoplay off
+    reason-banner.js     "You came for" reminder after a reason peek
   popup/                 popup UI (mode toggle, widget toggles, AI instruction)
 icons/                   placeholder icons
 ```
@@ -51,6 +55,11 @@ icons/                   placeholder icons
 ```js
 {
   shortsBlocking: true,
+  hideHomeFeed: true,
+  hideUpNext: true,
+  blockAutoplay: true,
+  hideComments: false,
+  peekLevel: "pause" | "reason" | "none",
   feedMode: "blank" | "widgets" | "ai",
   aiInstruction: "",
   widgets: { todo: true, timer: true, quote: true }
@@ -59,9 +68,12 @@ icons/                   placeholder icons
 
 ## Testing
 
+**Unit tests**: `node test/unit.mjs` checks the settings layer (upgrade from
+v0.1, defaults, reason validation, concurrent writes) in plain Node.
+
 **Signed-out smoke test** — `node test/e2e.mjs` loads the extension unpacked into
 Playwright's Chromium and checks Shorts removal, the `/shorts` redirect, all
-three feed modes, SPA re-mount, and live settings propagation (10 assertions).
+three feed modes, SPA re-mount, and live settings propagation (35 assertions).
 Reuses the Playwright build the Playwright MCP already installed; screenshots to
 `test/screenshots/`.
 

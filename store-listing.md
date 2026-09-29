@@ -24,45 +24,47 @@ YouTube Feed Blocker
 ## Short description (max 132 characters)
 
 ```
-Remove YouTube Shorts everywhere and replace the home feed with a blank page, focus widgets, or (soon) an AI-curated feed.
+Hide YouTube Shorts, the home feed, Up next, autoplay and comments. Peeking at your feed takes a pause you choose.
 ```
-(119 characters.)
+(113 characters.)
 
 ## Detailed description
 
 ```
-YouTube Feed Blocker cuts the two biggest sources of "I only meant to watch one
-video" on YouTube.
+YouTube Feed Blocker makes YouTube calmer. You choose what to hide, and the
+home feed is still there when you really want it, after a short pause.
 
-REMOVE SHORTS, EVERYWHERE
-- Hides the Shorts entry in the sidebar and the Shorts tab on channel pages
-- Hides Shorts shelves and Shorts tiles in the home feed, search results, and
-  channel pages
-- Sends any /shorts/ link to the normal video player instead of the Shorts feed
-- Keeps working as you navigate, because YouTube re-adds these elements as you
-  browse
+HIDE WHAT PULLS YOU IN
+- Home feed: the endless grid on the front page
+- Shorts: hidden everywhere, and /shorts/ links open in the normal player
+- Up next: suggestions beside and after a video (playlists still work)
+- Autoplay: the next video no longer starts on its own
+- Comments: optional, off by default
+Every item is a switch in the popup and applies instantly, no reload.
 
-REPLACE THE HOME FEED
-Pick what the YouTube home page shows you, from the toolbar popup:
-- Blank - a calm, empty home page
-- Focus widgets - a to-do list, a focus timer, and a daily quote
-- AI-curated - describe the feed you want in plain words (preview only for now;
-  see below)
+PEEK, BUT ON PURPOSE
+Choose how hard it is to see the real home feed:
+- Pause: wait 10 seconds
+- Pause and say why: type what you came for, then wait. A small reminder of
+  your reason stays on screen while you browse
+- No peeking: the feed stays hidden. Search and subscriptions still work
 
-Every setting is a switch in the popup. Turn Shorts blocking off any time and
-everything comes back with no reload.
+INSTEAD OF THE FEED
+Show a blank page, focus widgets (to-do list, focus timer, a daily quote), or
+a preview of an upcoming AI-curated feed.
 
 PRIVACY
 No data is collected. No network requests. Your settings are stored in your
 browser (chrome.storage) and synced only across your own Chrome by Chrome
-itself. Full policy: https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
+itself. The reason you type when peeking stays in that tab's memory and is
+never saved or sent anywhere. Full policy:
+https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
 
 ABOUT "AI-CURATED" MODE
-The instruction box works and your text is saved, but the classification service
-that would actually filter the feed is not built yet, so this mode currently
-shows a preview of the control rather than a filtered feed. A future update will
-add the real filtering; the privacy policy will be updated before any version
-that sends data is released.
+The instruction box works and your text is saved, but the filtering service is
+not built yet, so this mode shows a preview of the control rather than a
+filtered feed. The privacy policy will be updated before any version that sends
+data is released.
 
 This is an early build shared with a small group for feedback.
 ```
@@ -126,6 +128,7 @@ English
 |---|---|---|
 | Store icon | 128x128 PNG | Have `icons/icon128.png` (placeholder red-slash mark) |
 | Screenshots | 1-5, 1280x800 or 640x400 PNG/JPEG | Done - five 1280x800 PNGs in `store-assets/screenshots/` |
+| Popup screenshot | optional, shows the v0.2 settings | `test/screenshots/popup.png` from the e2e run (340px wide; place on a 1280x800 canvas before uploading) |
 | Small promo tile | 440x280 PNG (optional for Unlisted) | Optional, skip for now |
 | Privacy policy URL | public, reachable | Done - https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html (GitHub Pages) |
 | Contact email (verified) | in the developer account | You set this in the account |
@@ -151,7 +154,7 @@ English
 
 4. **Create the item and upload the package.**
    In the dev console: "Add new item" -> upload
-   `youtube-feed-blocker-v0.1.0.zip` (built, see below).
+   `youtube-feed-blocker-v0.2.0.zip` (built, see below).
 
 5. **Fill the store listing tab** with the name / short description / detailed
    description / category / language / icon / screenshots above.
