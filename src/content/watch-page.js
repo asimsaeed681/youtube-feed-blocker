@@ -4,9 +4,11 @@
  * Two jobs:
  *   1. Mirror the hideUpNext, hideComments and blockAutoplay settings onto
  *      classes on <html>, which watch-page.css keys off.
- *   2. When blockAutoplay is on, switch YouTube's own autoplay toggle off once
- *      per video page. Turning the setting off again does not switch YouTube's
- *      autoplay back on: from then on that toggle is the user's.
+ *   2. When blockAutoplay is on, poll until YouTube's own autoplay toggle
+ *      reads off, clicking the toggle's button with a settle gap between
+ *      clicks, bounded by a time budget. Turning the setting off again does
+ *      not switch YouTube's autoplay back on: from then on that toggle is
+ *      the user's.
  */
 (function () {
   "use strict";

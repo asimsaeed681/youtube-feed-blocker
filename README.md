@@ -46,7 +46,7 @@ src/
     watch-page.css       Up next / autoplay / comments hiding (class-keyed)
     watch-page.js        mirrors those settings to <html> classes, turns autoplay off
     reason-banner.js     "You came for" reminder after a reason peek
-  popup/                 popup UI (mode toggle, widget toggles, AI instruction)
+  popup/                 popup UI (hide toggles, peek level, feed mode, widgets, AI instruction)
 icons/                   placeholder icons
 ```
 
