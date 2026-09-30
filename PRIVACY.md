@@ -1,4 +1,4 @@
-# Privacy Policy — YouTube Feed Blocker
+# Privacy Policy: YouTube Feed Blocker
 
 **Last updated:** 2026-09-30
 **Applies to:** YouTube Feed Blocker Chrome extension, versions 0.1.x and 0.2.x
@@ -14,7 +14,7 @@ browser.
 | Data | Where it is stored | Who can read it |
 |---|---|---|
 | Your selected feed mode (blank / widgets / AI), which page elements are hidden (home feed, Shorts, Up next, autoplay, comments), peek level, Shorts-blocking on/off, and widget preferences | `chrome.storage.sync` | Only you. Chrome syncs it between your own signed-in Chrome installations. The developer has no access. |
-| The optional free-text "feed instruction" you type in AI mode | `chrome.storage.sync` | Only you (as above). In this version it is never sent anywhere — it is stored for a feature that is not yet built. |
+| The optional free-text "feed instruction" you type in AI mode | `chrome.storage.sync` | Only you (as above). In this version it is never sent anywhere. It is stored for a feature that is not yet built. |
 | Your to-do list items and their checked state | `chrome.storage.local` | Only you. Never leaves the device it was typed on. |
 
 No other data is stored. There is no account, no login, and no identifier of
@@ -36,19 +36,19 @@ open; the extension never saves it or sends it anywhere.
 
 ## Permissions and why they are needed
 
-- **`storage`** — to remember your settings (see the table above) between
+- **`storage`**: to remember your settings (see the table above) between
   sessions and across your own Chrome installations. No data leaves the browser.
-- **Access to `https://www.youtube.com/*`** — the extension's entire purpose is
-  to modify `youtube.com` pages: hiding Shorts elements and replacing the home
-  feed with your chosen view. It runs only on `www.youtube.com` and, again,
+- **Access to `https://www.youtube.com/*`**: the extension's entire purpose is
+  to modify `youtube.com` pages: hiding the home feed, Shorts, suggested videos,
+  autoplay and comments, and showing its own panel in place of the home feed. It runs only on `www.youtube.com` and, again,
   makes no network requests from those pages.
 
 ## A note about the future "AI-curated feed" mode
 
 A later version intends to let you filter your home feed with a written
 instruction (e.g. "only coding tutorials, no clickbait"). Making that work will
-require sending video metadata — such as titles and channel names visible on the
-page — to a classification service. **That feature does not exist in this
+require sending video metadata (such as titles and channel names visible on the
+page) to a classification service. **That feature does not exist in this
 version.** No such data is sent today. This policy will be updated, and the
 change made clear, before any version that transmits data is released.
 
