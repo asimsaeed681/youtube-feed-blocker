@@ -97,7 +97,7 @@ async function setSettings(extId, patch) {
       peekLevel: "reason",
       feedMode: "widgets",
       aiInstruction: "",
-      widgets: { todo: true, timer: true, quote: true },
+      widgets: { todo: true, quote: true },
       ...patch,
     }
   );
@@ -161,8 +161,28 @@ try {
   }));
   log("home feed replaced (html.yfb-home-replaced)", home.htmlClasses.includes("yfb-home-replaced"));
   log("#yfb-panel injected in widgets mode", home.panelMode === "widgets", "mode=" + home.panelMode);
-  log("all 3 widgets render", home.widgetCount === 3, "count=" + home.widgetCount);
+  log("both widgets render", home.widgetCount === 2, "count=" + home.widgetCount);
   log("real recommendation grid hidden", home.gridDisplay === "none" || home.gridDisplay === "no-grid", home.gridDisplay);
+  // A signed-in home page always has a chip bar, which grows YouTube's
+  // #frosted-glass backdrop down over the panel. Force that state and check
+  // the backdrop stops above the first widget.
+  const glass = await yt.evaluate(() => {
+    const fg = document.getElementById("frosted-glass");
+    if (!fg) return null;
+    const before = fg.className;
+    fg.className = "with-chipbar style-scope ytd-app";
+    const out = {
+      backdropBottom: Math.round(fg.getBoundingClientRect().bottom),
+      widgetTop: Math.round(document.querySelector("#yfb-panel .yfb-widget").getBoundingClientRect().top),
+    };
+    fg.className = before;
+    return out;
+  });
+  log(
+    "chip-bar backdrop doesn't cover the panel",
+    !!glass && glass.backdropBottom <= glass.widgetTop,
+    JSON.stringify(glass)
+  );
   log("Shorts hidden from sidebar", home.miniShorts === "none" || home.miniShorts === "no-entry", home.miniShorts);
 
   const sp = await ctx.newPage();
@@ -188,7 +208,7 @@ try {
   }));
   log(
     "panel re-mounts after SPA nav back to home",
-    spa.path === "/" && spa.panelMode === "widgets" && spa.widgetCount === 3,
+    spa.path === "/" && spa.panelMode === "widgets" && spa.widgetCount === 2,
     `path=${spa.path} mode=${spa.panelMode} widgets=${spa.widgetCount}`
   );
 

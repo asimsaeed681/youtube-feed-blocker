@@ -74,7 +74,7 @@ async function setSettings(patch) {
   const p = await ctx.newPage();
   await p.goto(`chrome-extension://${ID}/src/popup/popup.html`);
   await p.evaluate((s) => new Promise((r) => chrome.storage.sync.set({ settings: s }, r)), {
-    shortsBlocking: true, feedMode: "widgets", aiInstruction: "", widgets: { todo: true, timer: true, quote: true }, ...patch,
+    shortsBlocking: true, feedMode: "widgets", aiInstruction: "", widgets: { todo: true, quote: true }, ...patch,
   });
   await p.close();
   await sleep(400);

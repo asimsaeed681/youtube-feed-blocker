@@ -28,7 +28,6 @@
         typeof s.aiInstruction === "string" ? s.aiInstruction : d.aiInstruction,
       widgets: {
         todo: bool(s.widgets?.todo, d.widgets.todo),
-        timer: bool(s.widgets?.timer, d.widgets.timer),
         quote: bool(s.widgets?.quote, d.widgets.quote),
       },
     };

@@ -34,7 +34,7 @@
     peekLevel: YFB.PEEK_LEVELS.REASON,
     feedMode: YFB.FEED_MODES.WIDGETS,
     aiInstruction: "",
-    widgets: Object.freeze({ todo: true, timer: true, quote: true }),
+    widgets: Object.freeze({ todo: true, quote: true }),
   });
 
   YFB.isValidReason = function isValidReason(value) {

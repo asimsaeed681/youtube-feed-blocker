@@ -17,6 +17,13 @@ html.yfb-home-replaced ytd-browse[page-subtype="home"] #chips-wrapper {
   display: none !important;
 }
 
+/* YouTube's #frosted-glass backdrop grows to 112px when it expects the filter
+   chip bar (always, on a signed-in home page). We hide the chips, so keep the
+   backdrop masthead-height or it covers the top of the panel. */
+html.yfb-home-replaced #frosted-glass.with-chipbar {
+  height: 56px !important;
+}
+
 #yfb-panel {
   /* light theme tokens */
   --yfb-text: #0f0f0f;
@@ -74,7 +81,7 @@ html[dark] #yfb-panel {
 /* --- widgets mode --- */
 #yfb-panel .yfb-widgets__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 #yfb-panel .yfb-widget {
@@ -82,9 +89,6 @@ html[dark] #yfb-panel {
   border: 1px solid var(--yfb-border);
   border-radius: 12px;
   padding: 16px;
-}
-#yfb-panel .yfb-widget--todo {
-  grid-column: 1 / -1;
 }
 #yfb-panel .yfb-widget__title {
   font-size: 13px;
@@ -142,23 +146,6 @@ html[dark] #yfb-panel {
   background: var(--yfb-input-bg);
   color: var(--yfb-text);
   font-size: 14px;
-}
-
-/* timer */
-#yfb-panel .yfb-timer__display {
-  font-size: 40px;
-  font-weight: 300;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  margin: 4px 0 12px;
-}
-#yfb-panel .yfb-timer__display.is-done {
-  color: #ff5252;
-}
-#yfb-panel .yfb-timer__controls {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
 }
 
 /* quote */
@@ -246,12 +233,6 @@ html[dark] #yfb-panel {
 #yfb-panel .yfb-ai__mock-body {
   font-size: 14px;
   margin: 0;
-}
-
-@media (max-width: 640px) {
-  #yfb-panel .yfb-widgets__grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* --- peeking: link, reason form, countdown --- */

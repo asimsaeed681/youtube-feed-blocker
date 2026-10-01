@@ -52,7 +52,7 @@ Choose how hard it is to see the real home feed:
 - No peeking: the feed stays hidden. Search and subscriptions still work
 
 INSTEAD OF THE FEED
-Show a blank page, focus widgets (to-do list, focus timer, a daily quote), or
+Show a blank page, focus widgets (a to-do list and a daily quote), or
 a preview of an upcoming AI-curated feed.
 
 PRIVACY

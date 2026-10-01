@@ -1,7 +1,6 @@
 /**
  * Productivity widget set for the "widgets" feed mode:
  *   - to-do list  (persisted in chrome.storage.local)
- *   - focus timer (simple countdown, in-memory per tab)
  *   - quote       (rotates daily from YFB.QUOTES)
  *
  * Exposes YFB.Widgets.render(container, settings). The container is owned by
@@ -111,69 +110,6 @@
     return card;
   }
 
-  // --- focus timer widget ---------------------------------------------
-  function buildTimer() {
-    const card = el("section", "yfb-widget yfb-widget--timer");
-    card.appendChild(el("h2", "yfb-widget__title", "Focus timer"));
-
-    const DEFAULT_SECONDS = 25 * 60;
-    let remaining = DEFAULT_SECONDS;
-    let handle = null;
-
-    const display = el("div", "yfb-timer__display", format(remaining));
-    card.appendChild(display);
-
-    function format(s) {
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
-    }
-    function tick() {
-      remaining = Math.max(0, remaining - 1);
-      display.textContent = format(remaining);
-      if (remaining === 0) {
-        stop();
-        display.classList.add("is-done");
-      }
-    }
-    function start() {
-      if (handle || remaining === 0) return;
-      handle = setInterval(tick, 1000);
-      startBtn.textContent = "Pause";
-    }
-    function stop() {
-      if (handle) {
-        clearInterval(handle);
-        handle = null;
-      }
-      startBtn.textContent = "Start";
-    }
-    function toggle() {
-      handle ? stop() : start();
-    }
-    function reset() {
-      stop();
-      remaining = DEFAULT_SECONDS;
-      display.classList.remove("is-done");
-      display.textContent = format(remaining);
-    }
-
-    const controls = el("div", "yfb-timer__controls");
-    const startBtn = el("button", "yfb-btn", "Start");
-    startBtn.type = "button";
-    startBtn.addEventListener("click", toggle);
-    const resetBtn = el("button", "yfb-btn yfb-btn--ghost", "Reset");
-    resetBtn.type = "button";
-    resetBtn.addEventListener("click", reset);
-    controls.append(startBtn, resetBtn);
-    card.appendChild(controls);
-
-    // Stop the interval if the widget is torn down.
-    card.addEventListener("yfb:teardown", stop);
-
-    return card;
-  }
-
   // --- quote widget --------------------------------------------------
   function buildQuote() {
     const card = el("section", "yfb-widget yfb-widget--quote");
@@ -194,11 +130,10 @@
       const grid = el("div", "yfb-widgets__grid");
       container.appendChild(grid);
 
-      if (w.timer) grid.appendChild(buildTimer());
       if (w.quote) grid.appendChild(buildQuote());
       if (w.todo) grid.appendChild(await buildTodo());
 
-      if (!w.timer && !w.quote && !w.todo) {
+      if (!w.quote && !w.todo) {
         grid.appendChild(
           el("p", "yfb-widgets__none", "All widgets are turned off in the popup.")
         );

@@ -41,7 +41,7 @@ src/
     hide-shorts.css      static Shorts-hiding rules (pre-paint)
     overlay.css          styles for the injected home-feed panel
     shorts-blocker.js    Shorts UI removal + /shorts redirect + observer
-    feed-widgets.js      to-do / timer / quote widgets
+    feed-widgets.js      to-do / quote widgets
     feed-replacer.js     hides the real home grid, injects the panel
     watch-page.css       Up next / autoplay / comments hiding (class-keyed)
     watch-page.js        mirrors those settings to <html> classes, turns autoplay off
@@ -62,7 +62,7 @@ icons/                   placeholder icons
   peekLevel: "pause" | "reason" | "none",
   feedMode: "blank" | "widgets" | "ai",
   aiInstruction: "",
-  widgets: { todo: true, timer: true, quote: true }
+  widgets: { todo: true, quote: true }
 }
 ```
 
@@ -73,7 +73,7 @@ v0.1, defaults, reason validation, concurrent writes) in plain Node.
 
 **Signed-out smoke test** — `node test/e2e.mjs` loads the extension unpacked into
 Playwright's Chromium and checks Shorts removal, the `/shorts` redirect, all
-three feed modes, SPA re-mount, and live settings propagation (35 assertions).
+three feed modes, SPA re-mount, and live settings propagation (36 assertions).
 Reuses the Playwright build the Playwright MCP already installed; screenshots to
 `test/screenshots/`.
 

@@ -16,7 +16,6 @@
     widgetOptions: document.getElementById("widgetOptions"),
     aiOptions: document.getElementById("aiOptions"),
     w_todo: document.getElementById("w_todo"),
-    w_timer: document.getElementById("w_timer"),
     w_quote: document.getElementById("w_quote"),
     aiInstruction: document.getElementById("aiInstruction"),
     version: document.getElementById("version"),
@@ -34,7 +33,6 @@
     els.peekLevel.forEach((r) => (r.checked = r.value === settings.peekLevel));
     els.feedMode.forEach((r) => (r.checked = r.value === settings.feedMode));
     els.w_todo.checked = settings.widgets.todo;
-    els.w_timer.checked = settings.widgets.timer;
     els.w_quote.checked = settings.widgets.quote;
     // Don't overwrite the textarea while the user is typing in it.
     if (document.activeElement !== els.aiInstruction) {
@@ -78,7 +76,7 @@
       });
     });
 
-    [["w_todo", "todo"], ["w_timer", "timer"], ["w_quote", "quote"]].forEach(
+    [["w_todo", "todo"], ["w_quote", "quote"]].forEach(
       ([id, key]) => {
         els[id].addEventListener("change", () => {
           YFB.setSettings({ widgets: { [key]: els[id].checked } });

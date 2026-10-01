@@ -36,8 +36,8 @@
   }
 
   // Only these settings change what the panel shows. Re-rendering on any other
-  // change (Shorts, watch-page toggles) would reset a running focus timer or
-  // peek countdown.
+  // change (Shorts, watch-page toggles) would reset a running peek countdown or
+  // wipe a half-typed to-do.
   function renderKey(s) {
     return JSON.stringify([s.feedMode, s.peekLevel, s.aiInstruction, s.widgets]);
   }
