@@ -402,3 +402,77 @@ html[dark] #yfb-panel {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* --- closing countdown chip (peek-timer.js). Fixed colours like the reason
+   banner, since it shows on every page in both YouTube themes. --- */
+#yfb-peek-chip {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2100;
+  padding: 6px 12px;
+  border-left: 3px solid #d9362b;
+  border-radius: 8px;
+  background: #1f1d1b;
+  color: #f3f1ee;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font: 13px/1.35 "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* --- time's up card --- */
+#yfb-timeup {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+#yfb-timeup .yfb-timeup__card {
+  width: min(380px, calc(100vw - 32px));
+  padding: 20px;
+  border-radius: 12px;
+  background: #1f1d1b;
+  color: #f3f1ee;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  font: 14px/1.4 "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+#yfb-timeup .yfb-timeup__title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+#yfb-timeup .yfb-timeup__body {
+  margin: 0 0 16px;
+  color: #a8a29c;
+}
+#yfb-timeup .yfb-timeup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#yfb-timeup .yfb-timeup__keep,
+#yfb-timeup .yfb-timeup__home {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+#yfb-timeup .yfb-timeup__keep {
+  border: 0;
+  background: #d9362b;
+  color: #ffffff;
+}
+#yfb-timeup .yfb-timeup__home {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #f3f1ee;
+}
+#yfb-timeup .yfb-timeup__keep:focus-visible,
+#yfb-timeup .yfb-timeup__home:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}

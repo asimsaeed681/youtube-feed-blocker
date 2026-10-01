@@ -502,6 +502,66 @@ try {
   log("home feed toggle off shows the real feed, no reload", await feedRevealed());
   await resetPeek(extId);
 
+  // ---------- v0.2: closing countdown and time's up ----------
+  // Sessions are written straight into chrome.storage.session from an
+  // extension page, so expiry can be tested in seconds, not minutes.
+  const setSessionEndingIn = (ms) =>
+    extEval(
+      extId,
+      (m) => new Promise((r) => chrome.storage.session.set({ peekSession: { endsAt: Date.now() + m, reason: "", bannerClosed: false } }, r)),
+      ms
+    );
+
+  await resetPeek(extId);
+  await setSettings(extId, {});
+  await setSessionEndingIn(4 * 60000);
+  await yt.bringToFront();
+  await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
+  await yt.waitForTimeout(3000);
+  const chip = await yt.textContent("#yfb-peek-chip").catch(() => null);
+  log("countdown chip shows in the last 5 minutes", /^Feed closes in [34]:[0-5]\d$/.test(chip || ""), chip);
+
+  // Expiry on a watch page: pause + card; keep watching resumes.
+  await resetPeek(extId);
+  await setSessionEndingIn(20000);
+  await yt.bringToFront();
+  await yt.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ", { waitUntil: "domcontentloaded" });
+  await yt.waitForSelector("video", { timeout: 20000 }).catch(() => {});
+  await yt.waitForSelector("#yfb-timeup", { timeout: 30000 }).catch(() => {});
+  const atExpiry = await yt.evaluate(() => ({
+    card: !!document.getElementById("yfb-timeup"),
+    title: document.getElementById("yfb-timeup-title")?.textContent || null,
+    paused: document.querySelector("video")?.paused ?? null,
+  }));
+  log("time's up on a video: card shown and video paused",
+    atExpiry.card && atExpiry.title === "Time's up" && atExpiry.paused === true, JSON.stringify(atExpiry));
+  await yt.click("#yfb-timeup .yfb-timeup__keep");
+  await yt.waitForTimeout(1500);
+  const afterKeep = await yt.evaluate(() => ({
+    card: !!document.getElementById("yfb-timeup"),
+    paused: document.querySelector("video")?.paused ?? null,
+  }));
+  log("keep watching closes the card and resumes", !afterKeep.card && afterKeep.paused === false, JSON.stringify(afterKeep));
+  const relatedAfter = await display(yt, "ytd-watch-flexy #related");
+  log("Up next hides again when the peek ends", relatedAfter === "none", relatedAfter);
+  await yt.evaluate(() => document.querySelector("video")?.pause());
+
+  // Expiry on the home page: the panel returns, no card.
+  await resetPeek(extId);
+  await setSessionEndingIn(8000);
+  await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
+  await yt.waitForTimeout(2000);
+  const openBefore = await feedRevealed();
+  await yt.waitForSelector("#yfb-panel", { timeout: 20000 }).catch(() => {});
+  log("time's up on Home: feed hides again, no card",
+    openBefore && !!(await yt.$("#yfb-panel")) && !(await yt.$("#yfb-timeup")), "open before expiry: " + openBefore);
+
+  // A session that ended while no YouTube tab was open must not open the feed.
+  await extEval(extId, () => new Promise((r) => chrome.storage.session.set({ peekSession: { endsAt: Date.now() - 60000, reason: "", bannerClosed: false } }, r)));
+  await goHome();
+  log("an expired session does not open the feed", !!(await yt.$("#yfb-panel")) && !(await yt.$("#yfb-timeup")));
+  await resetPeek(extId);
+
   // ---------- v0.2: popup ----------
   await setSettings(extId, {});
   const pop = await ctx.newPage();
