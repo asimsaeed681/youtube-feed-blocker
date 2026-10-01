@@ -46,10 +46,18 @@ Every item is a switch in the popup and applies instantly, no reload.
 
 PEEK, BUT ON PURPOSE
 Choose how hard it is to see the real home feed:
-- Pause: wait 10 seconds
-- Pause and say why: type what you came for, then wait. A small reminder of
-  your reason stays on screen while you browse
+- Pause: pick how long (5 to 30 minutes), then wait 10 seconds
+- Pause and say why: also type what you came for. A small reminder of your
+  reason stays on screen while you browse
 - No peeking: the feed stays hidden. Search and subscriptions still work
+A peek works in every YouTube tab. A small countdown appears in the last 5
+minutes, and when time is up the video pauses so you choose: keep watching
+this one video, or go back to Home.
+
+DAILY FEED TIME
+Peeks come out of a daily budget (30 minutes by default). Lowering it applies
+right away; raising it waits until the next day, when you are asked to
+confirm.
 
 INSTEAD OF THE FEED
 Show a blank page, focus widgets (a to-do list and a daily quote), or
@@ -58,8 +66,7 @@ a preview of an upcoming AI-curated feed.
 PRIVACY
 No data is collected. No network requests. Your settings are stored in your
 browser (chrome.storage) and synced only across your own Chrome by Chrome
-itself. The reason you type when peeking is only kept while that tab is open.
-The extension never saves it or sends it anywhere. Full policy:
+itself. The reason you type when peeking is only kept until the peek ends or the browser closes. The extension never saves it or sends it anywhere. Full policy:
 https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
 
 ABOUT "AI-CURATED" MODE
@@ -95,8 +102,10 @@ English
   ```
   Stores which page elements are hidden (home feed, Shorts, Up next, autoplay,
   comments), the peek level, the feed mode, optional feed-instruction text,
-  widget preferences, and to-do items in chrome.storage.local. No data is
-  transmitted.
+  widget preferences, the daily feed time setting and today's used feed
+  minutes (chrome.storage.sync), the running peek (chrome.storage.session,
+  cleared when the browser closes), and to-do items (chrome.storage.local).
+  No data is transmitted.
   ```
 
 - Host permission `https://www.youtube.com/*` (from the content script match)

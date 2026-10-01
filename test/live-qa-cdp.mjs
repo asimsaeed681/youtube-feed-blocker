@@ -100,10 +100,17 @@ async function setSettings(patch) {
   const p = await ctx.newPage();
   await p.goto(`chrome-extension://${ID}/src/popup/popup.html`);
   await p.evaluate((s) => new Promise((r) => chrome.storage.sync.set({ settings: s }, r)), {
-    shortsBlocking: true, feedMode: "widgets", aiInstruction: "", widgets: { todo: true, quote: true }, ...patch,
+    shortsBlocking: true, feedMode: "widgets", aiInstruction: "", widgets: { todo: true, quote: true }, dailyBudgetMinutes: 30, pendingBudget: null, ...patch,
   });
   await p.close();
   await sleep(400);
+}
+async function extEvalLive(fn) {
+  const p = await ctx.newPage();
+  await p.goto(`chrome-extension://${ID}/src/popup/popup.html`);
+  const out = await p.evaluate(fn);
+  await p.close();
+  return out;
 }
 async function loadHome() {
   await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
@@ -244,14 +251,31 @@ try {
     await yt.screenshot({ path: path.join(OUT, "watch-v02-hidden.png") });
   } else R.v02_watch = { error: "no video id from subscriptions" };
 
+  await extEvalLive(() => new Promise((r) => chrome.storage.session.remove("peekSession", r)));
   await loadHome();
   await yt.click("#yfb-panel .yfb-peek__link").catch(() => {});
+  await yt.click('#yfb-panel .yfb-peek__duration[data-minutes="5"]').catch(() => {});
   await sleep(11500);
   R.v02_peek = await yt.evaluate(() => ({
     revealed: !document.documentElement.classList.contains("yfb-home-replaced") && !document.getElementById("yfb-panel"),
     gridItems: document.querySelectorAll('ytd-browse[page-subtype="home"] ytd-rich-item-renderer').length,
+    chip: document.getElementById("yfb-peek-chip")?.textContent || null,
   }));
   await yt.screenshot({ path: path.join(OUT, "home-v02-after-peek.png") });
+  if (vidId) {
+    await extEvalLive(() => new Promise((r) => chrome.storage.session.set({ peekSession: { endsAt: Date.now() + 15000, reason: "", bannerClosed: false } }, r)));
+    await yt.goto(`https://www.youtube.com/watch?v=${vidId}`, { waitUntil: "domcontentloaded" });
+    await yt.waitForSelector("#yfb-timeup", { timeout: 40000 }).catch(() => {});
+    R.v02_timeup = await yt.evaluate(() => ({
+      card: !!document.getElementById("yfb-timeup"),
+      paused: document.querySelector("video")?.paused ?? null,
+    }));
+    await yt.screenshot({ path: path.join(OUT, "watch-v02-timeup.png") });
+  }
+  await extEvalLive(() => Promise.all([
+    new Promise((r) => chrome.storage.session.remove("peekSession", r)),
+    new Promise((r) => chrome.storage.sync.remove("feedTimeUsage", r)),
+  ]));
 
   // restore a sane default for the user's continued manual poking
   await setSettings({ feedMode: "widgets", shortsBlocking: true });

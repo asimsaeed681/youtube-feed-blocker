@@ -6,10 +6,13 @@ A Manifest V3 Chrome extension that:
    link, and `/shorts/<id>` redirected to `/watch?v=<id>`), Up next (sidebar,
    end screen, end cards; playlists stay), autoplay, and optionally comments.
    Each is a switch in the popup and applies live.
-2. **Peeking with friction**: a "Show my feed anyway" link under the panel,
-   gated by a 10 second pause, a pause plus a typed reason (shown afterwards
-   as a "You came for" reminder), or no peeking at all. A peek lasts until you
-   leave the home page.
+2. **Timed peeking with friction**: "Show my feed anyway" asks how long
+   (5, 10, 15 or 30 minutes), optionally what you came for, then pauses 10
+   seconds. The feed and Up next open in every YouTube tab for that long, a
+   small countdown appears in the last 5 minutes, and when time is up the video
+   pauses with "Time's up" (keep watching this one video, or back to Home).
+   Peeks draw from a **daily feed time** budget (default 30 minutes): lowering
+   it applies at once, raising it needs a confirmation the next day.
 3. **Replaces the home feed** with a blank page, productivity widgets, or an
    AI-curated preview (no classifier backend yet).
 4. Persists all settings via `chrome.storage.sync`.
@@ -37,6 +40,8 @@ src/
   background.js          MV3 service worker: seeds default settings on install
   lib/defaults.js        shared constants + default settings
   lib/storage.js         chrome.storage.sync wrapper
+  lib/feed-budget.js     daily feed time: remaining, peek lengths, budget changes
+  lib/peek-session.js    the running peek, shared by all tabs (storage.session)
   content/
     hide-shorts.css      static Shorts-hiding rules (pre-paint)
     overlay.css          styles for the injected home-feed panel
@@ -46,6 +51,7 @@ src/
     watch-page.css       Up next / autoplay / comments hiding (class-keyed)
     watch-page.js        mirrors those settings to <html> classes, turns autoplay off
     reason-banner.js     "You came for" reminder after a reason peek
+    peek-timer.js        closing countdown chip and the time's up card
   popup/                 popup UI (hide toggles, peek level, feed mode, widgets, AI instruction)
 icons/                   placeholder icons
 ```
@@ -62,18 +68,23 @@ icons/                   placeholder icons
   peekLevel: "pause" | "reason" | "none",
   feedMode: "blank" | "widgets" | "ai",
   aiInstruction: "",
-  widgets: { todo: true, quote: true }
+  widgets: { todo: true, quote: true },
+  dailyBudgetMinutes: 0 | 15 | 30 | 45 | 60 | 90,   // 0 = Off
+  pendingBudget: null | { minutes, requestedOn: "YYYY-MM-DD" }
 }
 ```
 
+Also stored: `feedTimeUsage` in `chrome.storage.sync` (`{ date, usedMinutes }`)
+and the running peek in `chrome.storage.session` (`peekSession`:
+`{ endsAt, reason, bannerClosed }`).
+
 ## Testing
 
-**Unit tests**: `node test/unit.mjs` checks the settings layer (upgrade from
-v0.1, defaults, reason validation, concurrent writes) in plain Node.
+**Unit tests**: `node test/unit.mjs` checks the settings layer (settings, upgrade, daily feed time, peek session, storage errors) in plain Node.
 
 **Signed-out smoke test** — `node test/e2e.mjs` loads the extension unpacked into
 Playwright's Chromium and checks Shorts removal, the `/shorts` redirect, all
-three feed modes, SPA re-mount, and live settings propagation (36 assertions).
+three feed modes, SPA re-mount, and live settings propagation (57 assertions).
 Reuses the Playwright build the Playwright MCP already installed; screenshots to
 `test/screenshots/`.
 

@@ -27,7 +27,7 @@
 </head>
 <body>
 <h1>Privacy Policy: YouTube Feed Blocker</h1>
-<p class="meta">Last updated: 2026-09-30 · Applies to YouTube Feed Blocker versions 0.1.x and 0.2.x</p>
+<p class="meta">Last updated: 2026-10-01 · Applies to YouTube Feed Blocker versions 0.1.x and 0.2.x</p>
 
 <h2>Summary</h2>
 <p>YouTube Feed Blocker does not collect, transmit, sell, or share any personal
@@ -38,7 +38,7 @@ browser.</p>
 <table>
   <tr><th>Data</th><th>Where it is stored</th><th>Who can read it</th></tr>
   <tr>
-    <td>Your selected feed mode (blank / widgets / AI), which page elements are hidden (home feed, Shorts, Up next, autoplay, comments), peek level, Shorts-blocking on/off, and widget preferences</td>
+    <td>Your selected feed mode (blank / widgets / AI), which page elements are hidden (home feed, Shorts, Up next, autoplay, comments), peek level, Shorts-blocking on/off, widget preferences, and the daily feed time setting (and any pending raise to a higher budget)</td>
     <td><code>chrome.storage.sync</code></td>
     <td>Only you. Chrome syncs it between your own signed-in Chrome installations. The developer has no access.</td>
   </tr>
@@ -48,6 +48,11 @@ browser.</p>
     <td>Only you (as above). In this version it is never sent anywhere. It is stored for a feature that is not yet built.</td>
   </tr>
   <tr>
+    <td>Today's used feed minutes (date and a number)</td>
+    <td><code>chrome.storage.sync</code></td>
+    <td>Only you (as above).</td>
+  </tr>
+  <tr>
     <td>Your to-do list items and their checked state</td>
     <td><code>chrome.storage.local</code></td>
     <td>Only you. Never leaves the device it was typed on.</td>
@@ -55,8 +60,7 @@ browser.</p>
 </table>
 <p>No other data is stored. There is no account, no login, and no identifier of
 any kind.</p>
-<p>The reason you type when peeking is kept only in memory while that tab is
-open; the extension never saves it or sends it anywhere.</p>
+<p>The reason you type when peeking, and the end time of the current peek, are kept in the browser's session storage (<code>chrome.storage.session</code>) until the peek ends or the browser closes. They are never sent anywhere.</p>
 
 <h2>What the extension does NOT do</h2>
 <ul>
