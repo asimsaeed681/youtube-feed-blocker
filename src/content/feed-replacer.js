@@ -100,7 +100,10 @@
   function renderBudgetConfirm(panel) {
     const pending = settings.pendingBudget;
     const current = settings.dailyBudgetMinutes;
-    const yesterday = YFB.todayKey(new Date(Date.now() - 86400000));
+    // Calendar-day subtraction, not a fixed 24h offset: a DST fall-back day
+    // is 25 hours, so Date.now() - 86400000 can land on today, not yesterday.
+    const now = new Date();
+    const yesterday = YFB.todayKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
     const when = pending.requestedOn === yesterday ? "Yesterday" : "Earlier";
 
     const card = el("div", "yfb-confirm");
@@ -371,9 +374,22 @@
     sync();
   });
 
+  // A one-shot local re-check at the session's own end time. Without this,
+  // a tab orphaned by a mid-peek extension update never hears the session
+  // removal (that comes from onChange, which stops firing once the worker
+  // reloads) and the feed stays open past endsAt until the tab reloads.
+  let localExpiryTimer = null;
   function setPeek(session) {
-    peekActive = YFB.peekRemainingMs(session, Date.now()) > 0;
+    if (localExpiryTimer) {
+      clearTimeout(localExpiryTimer);
+      localExpiryTimer = null;
+    }
+    const remaining = YFB.peekRemainingMs(session, Date.now());
+    peekActive = remaining > 0;
     sync();
+    if (remaining > 0) {
+      localExpiryTimer = setTimeout(() => setPeek(session), remaining + 50);
+    }
   }
   YFB.PeekSession.get().then(setPeek);
   YFB.PeekSession.onChange(setPeek);

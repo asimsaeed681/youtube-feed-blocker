@@ -20,8 +20,15 @@
   const TICK_MS = 1000;
   // A removal this close to endsAt is another tab's expiry, not a cancel.
   const EXPIRY_SLACK_MS = 2000;
-  // YouTube selector for the main player's video element.
-  const VIDEO = "video.html5-main-video, #movie_player video, video";
+  // YouTube selectors for the main player's video element, checked in order
+  // so a hover-preview video earlier in the DOM can't win a combined-selector
+  // document-order match.
+  const MAIN_VIDEO = "video.html5-main-video";
+  const PLAYER_VIDEO = "#movie_player video";
+
+  function mainVideo() {
+    return document.querySelector(MAIN_VIDEO) || document.querySelector(PLAYER_VIDEO);
+  }
 
   let session = null;
   let ticker = null;
@@ -53,10 +60,17 @@
       chip = el("div");
       chip.id = CHIP_ID;
       chip.setAttribute("role", "timer");
-      document.body.appendChild(chip);
+      (document.fullscreenElement || document.body).appendChild(chip);
     }
     chip.textContent = "Feed closes in " + format(ms);
   }
+
+  // Fullscreen only renders document.fullscreenElement's subtree, so a chip
+  // left under document.body would vanish; move it into whichever is current.
+  document.addEventListener("fullscreenchange", () => {
+    const chip = document.getElementById(CHIP_ID);
+    if (chip) (document.fullscreenElement || document.body).appendChild(chip);
+  });
 
   // --- time's up card ---------------------------------------------------
   function closeCard() {
@@ -65,8 +79,11 @@
   }
 
   function showTimeUp() {
-    const video = document.querySelector(VIDEO);
+    const video = mainVideo();
     if (video) video.pause();
+    // Fullscreen only renders document.fullscreenElement's subtree, so the
+    // card would be invisible behind it; drop out of fullscreen first.
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (document.getElementById(CARD_ID) || !document.body) return;
 
     const overlay = el("div");
@@ -87,7 +104,7 @@
 
     const keepWatching = () => {
       closeCard();
-      const v = document.querySelector(VIDEO);
+      const v = mainVideo();
       if (v) v.play().catch(() => {});
     };
     keep.addEventListener("click", keepWatching);
@@ -114,6 +131,20 @@
           e.preventDefault();
           keep.focus();
         }
+        return;
+      }
+      // Stop every other key (not Enter/Space, which must still activate our
+      // buttons) from reaching YouTube's player shortcuts (k, j, l, f) behind
+      // the dialog.
+      e.stopPropagation();
+    });
+    // Keep focus inside the dialog: a mousedown on the backdrop itself (not
+    // the card) would otherwise blur the focused button with nothing to
+    // replace it.
+    overlay.addEventListener("mousedown", (e) => {
+      if (e.target === overlay) {
+        e.preventDefault();
+        keep.focus();
       }
     });
 

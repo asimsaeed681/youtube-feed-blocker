@@ -13,6 +13,7 @@
   const YFB = window.YFB;
   const BANNER_ID = "yfb-reason-banner";
   let session = null;
+  let localExpiryTimer = null;
 
   function shouldShow() {
     return (
@@ -57,12 +58,22 @@
     bar.querySelector(".yfb-reason__text").textContent = "You came for: " + session.reason;
   }
 
-  YFB.PeekSession.get().then((s) => {
+  // A one-shot local re-check at the session's own end time, so a tab
+  // orphaned by a mid-peek extension update (which stops onChange from
+  // firing once the worker reloads) still closes the banner instead of
+  // showing a stale reason past endsAt until the tab reloads.
+  function setSession(s) {
+    if (localExpiryTimer) {
+      clearTimeout(localExpiryTimer);
+      localExpiryTimer = null;
+    }
     session = s;
     render();
-  });
-  YFB.PeekSession.onChange((s) => {
-    session = s;
-    render();
-  });
+    const remaining = YFB.peekRemainingMs(session, Date.now());
+    if (remaining > 0) {
+      localExpiryTimer = setTimeout(() => setSession(session), remaining + 50);
+    }
+  }
+  YFB.PeekSession.get().then(setSession);
+  YFB.PeekSession.onChange(setSession);
 })();

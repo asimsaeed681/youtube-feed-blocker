@@ -87,9 +87,22 @@
 
   document.addEventListener("yt-navigate-finish", switchOffAutoplay, true);
 
+  // A one-shot local re-check at the session's own end time, so a tab
+  // orphaned by a mid-peek extension update (which stops onChange from
+  // firing once the worker reloads) still flips Up next back off instead of
+  // staying open past endsAt until the tab reloads.
+  let localExpiryTimer = null;
   function setPeek(session) {
-    peekActive = YFB.peekRemainingMs(session, Date.now()) > 0;
+    if (localExpiryTimer) {
+      clearTimeout(localExpiryTimer);
+      localExpiryTimer = null;
+    }
+    const remaining = YFB.peekRemainingMs(session, Date.now());
+    peekActive = remaining > 0;
     applyClasses();
+    if (remaining > 0) {
+      localExpiryTimer = setTimeout(() => setPeek(session), remaining + 50);
+    }
   }
   YFB.PeekSession.get().then(setPeek);
   YFB.PeekSession.onChange(setPeek);

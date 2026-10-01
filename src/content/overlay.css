@@ -390,7 +390,7 @@ html[dark] #yfb-panel {
   margin: 0 0 16px;
   padding: 14px 16px;
   border-left: 3px solid #d9362b;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--yfb-card);
 }
 #yfb-panel .yfb-confirm__text {
@@ -434,7 +434,7 @@ html[dark] #yfb-panel {
 #yfb-timeup .yfb-timeup__card {
   width: min(380px, calc(100vw - 32px));
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: #1f1d1b;
   color: #f3f1ee;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
