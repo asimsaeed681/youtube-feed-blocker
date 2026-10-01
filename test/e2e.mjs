@@ -551,6 +551,32 @@ try {
   log("Up next hides again when the peek ends", relatedAfter === "none", relatedAfter);
   await yt.evaluate(() => document.querySelector("video")?.pause());
 
+  // Cross-tab expiry: a removal near endsAt is another tab's own expiry, not
+  // a cancel (endedByAnotherTab in peek-timer.js), and must show time's up
+  // here too.
+  await resetPeek(extId);
+  const setAt = Date.now();
+  await setSessionEndingIn(15000);
+  await yt.bringToFront();
+  await yt.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ", { waitUntil: "domcontentloaded" });
+  await yt.waitForSelector("video", { timeout: 20000 }).catch(() => {});
+  const elapsedSinceSetAt = Date.now() - setAt;
+  if (elapsedSinceSetAt < 14000) await yt.waitForTimeout(14000 - elapsedSinceSetAt);
+  const removedAt = Date.now();
+  await extEval(extId, () => new Promise((r) => chrome.storage.session.remove("peekSession", r)));
+  await yt.waitForTimeout(1500);
+  const crossTab = await yt.evaluate(() => ({
+    card: !!document.getElementById("yfb-timeup"),
+    paused: document.querySelector("video")?.paused ?? null,
+  }));
+  log(
+    "time's up shows when another tab ends the peek",
+    crossTab.card === true && crossTab.paused === true && removedAt < setAt + 15000,
+    `margin=${setAt + 15000 - removedAt}ms card=${crossTab.card} paused=${crossTab.paused}`
+  );
+  await yt.click("#yfb-timeup .yfb-timeup__keep");
+  await yt.evaluate(() => document.querySelector("video")?.pause());
+
   // Expiry on the home page: the panel returns, no card.
   await resetPeek(extId);
   await setSessionEndingIn(8000);
@@ -605,6 +631,21 @@ try {
       afterRaise.checked === "15" && afterRaise.note === "You asked for 45 minutes. You'll be asked to confirm tomorrow.",
     JSON.stringify({ checked: afterRaise.checked, note: afterRaise.note, pending: afterRaise.stored.pendingBudget })
   );
+
+  // Clicking the already-checked current value fires no "change" event, so
+  // this exercises popup.js's own "click" listener on the budget radios.
+  await pop.click('label:has(input[name="dailyBudget"][value="15"])');
+  await pop.waitForTimeout(500);
+  const afterRepick = await pop.evaluate(() => ({
+    pendingHidden: document.getElementById("budgetPending").hidden,
+  }));
+  afterRepick.stored = await pop.evaluate(() => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings))));
+  log(
+    "re-picking the current budget cancels a pending raise",
+    afterRepick.stored.pendingBudget === null && afterRepick.pendingHidden === true,
+    JSON.stringify({ pending: afterRepick.stored.pendingBudget, hidden: afterRepick.pendingHidden })
+  );
+
   await pop.click('label:has(input[name="peekLevel"][value="none"])');
   await pop.waitForTimeout(300);
   log("daily feed time hides when peeking is off", await pop.evaluate(() => document.getElementById("budgetSection").hidden === true));

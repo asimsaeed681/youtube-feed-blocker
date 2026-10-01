@@ -92,6 +92,15 @@
         reflect(current);
         YFB.setSettings(patch);
       });
+      // Re-picking the already-checked current value fires no "change"
+      // event, so a pending raise clicked away from would never cancel.
+      radio.addEventListener("click", () => {
+        if (!radio.checked || Number(radio.value) !== current.dailyBudgetMinutes || !current.pendingBudget) return;
+        const patch = YFB.applyBudgetChange(current, Number(radio.value), YFB.todayKey());
+        current = { ...current, ...patch };
+        reflect(current);
+        YFB.setSettings(patch);
+      });
     });
 
     els.feedMode.forEach((radio) => {
