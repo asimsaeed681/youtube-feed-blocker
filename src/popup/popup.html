@@ -57,6 +57,19 @@
           </div>
         </section>
 
+        <section class="pop-section" id="budgetSection" aria-labelledby="budgetTitle">
+          <h2 id="budgetTitle" class="pop-title">Daily feed time</h2>
+          <div class="pop-chips" role="radiogroup" aria-labelledby="budgetTitle">
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="0" /><span>Off</span></label>
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="15" /><span>15 min</span></label>
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="30" /><span>30 min</span></label>
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="45" /><span>45 min</span></label>
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="60" /><span>60 min</span></label>
+            <label class="pop-chip"><input type="radio" name="dailyBudget" value="90" /><span>90 min</span></label>
+          </div>
+          <p class="pop-hint" id="budgetPending" hidden></p>
+        </section>
+
         <section class="pop-section" aria-labelledby="insteadTitle">
           <h2 id="insteadTitle" class="pop-title">Instead of the feed</h2>
           <div class="pop-options" role="radiogroup" aria-labelledby="insteadTitle">
@@ -97,6 +110,7 @@
 
     <script src="../lib/defaults.js"></script>
     <script src="../lib/storage.js"></script>
+    <script src="../lib/feed-budget.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

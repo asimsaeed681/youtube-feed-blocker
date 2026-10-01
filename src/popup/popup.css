@@ -203,6 +203,41 @@ textarea {
   font-size: 12px;
 }
 
+/* --- daily feed time choices --- */
+.pop-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.pop-chip {
+  position: relative;
+  cursor: pointer;
+}
+.pop-chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.pop-chip span {
+  display: block;
+  padding: 8px 0;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+.pop-chip:has(input:checked) span {
+  border-color: var(--accent);
+}
+.pop-chip:has(input:focus-visible) span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .pop-switch:focus-visible,
 .pop-radio:focus-visible,
 .pop-check input:focus-visible,

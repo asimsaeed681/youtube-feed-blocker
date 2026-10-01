@@ -584,6 +584,33 @@ try {
     JSON.stringify(popInitial)
   );
 
+  // Daily feed time: default, lower applies now, raise is parked.
+  const budgetChecked = await pop.evaluate(() => document.querySelector('input[name="dailyBudget"]:checked')?.value);
+  log("popup shows the 30 minute daily feed time by default", budgetChecked === "30", budgetChecked);
+  await pop.click('label:has(input[name="dailyBudget"][value="15"])');
+  await pop.waitForTimeout(500);
+  const afterLower = await pop.evaluate(() => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings))));
+  log("lowering the daily feed time applies now", afterLower.dailyBudgetMinutes === 15 && afterLower.pendingBudget === null, JSON.stringify(afterLower));
+  await pop.click('label:has(input[name="dailyBudget"][value="45"])');
+  await pop.waitForTimeout(500);
+  const afterRaise = await pop.evaluate(() => ({
+    stored: null,
+    checked: document.querySelector('input[name="dailyBudget"]:checked')?.value,
+    note: document.getElementById("budgetPending").hidden ? null : document.getElementById("budgetPending").textContent,
+  }));
+  afterRaise.stored = await pop.evaluate(() => new Promise((r) => chrome.storage.sync.get("settings", (x) => r(x.settings))));
+  log(
+    "raising the daily feed time waits for confirmation",
+    afterRaise.stored.dailyBudgetMinutes === 15 && afterRaise.stored.pendingBudget?.minutes === 45 &&
+      afterRaise.checked === "15" && afterRaise.note === "You asked for 45 minutes. You'll be asked to confirm tomorrow.",
+    JSON.stringify({ checked: afterRaise.checked, note: afterRaise.note, pending: afterRaise.stored.pendingBudget })
+  );
+  await pop.click('label:has(input[name="peekLevel"][value="none"])');
+  await pop.waitForTimeout(300);
+  log("daily feed time hides when peeking is off", await pop.evaluate(() => document.getElementById("budgetSection").hidden === true));
+  await pop.click('label:has(input[name="peekLevel"][value="reason"])');
+  await pop.waitForTimeout(300);
+
   // AI instruction autosave across typing.
   await pop.click('label:has(input[name="feedMode"][value="ai"])');
   await pop.waitForTimeout(300);

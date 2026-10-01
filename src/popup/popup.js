@@ -19,6 +19,9 @@
     w_quote: document.getElementById("w_quote"),
     aiInstruction: document.getElementById("aiInstruction"),
     version: document.getElementById("version"),
+    budget: Array.from(document.querySelectorAll('input[name="dailyBudget"]')),
+    budgetSection: document.getElementById("budgetSection"),
+    budgetPending: document.getElementById("budgetPending"),
   };
 
   function reflectConditionalSections(settings) {
@@ -26,6 +29,8 @@
     els.feedSections.hidden = !settings.hideHomeFeed;
     els.widgetOptions.hidden = settings.feedMode !== YFB.FEED_MODES.WIDGETS;
     els.aiOptions.hidden = settings.feedMode !== YFB.FEED_MODES.AI;
+    // A daily budget only matters when peeking is possible.
+    els.budgetSection.hidden = settings.peekLevel === YFB.PEEK_LEVELS.NONE;
   }
 
   function reflect(settings) {
@@ -38,6 +43,16 @@
     if (document.activeElement !== els.aiInstruction) {
       els.aiInstruction.value = settings.aiInstruction;
     }
+    // The checked choice is the budget in force; a raise waiting for
+    // tomorrow's confirmation is described underneath instead.
+    els.budget.forEach((r) => (r.checked = Number(r.value) === settings.dailyBudgetMinutes));
+    const pending = settings.pendingBudget;
+    els.budgetPending.hidden = !pending;
+    els.budgetPending.textContent = !pending
+      ? ""
+      : pending.minutes === 0
+        ? "You asked to turn the limit off. You'll be asked to confirm tomorrow."
+        : "You asked for " + pending.minutes + " minutes. You'll be asked to confirm tomorrow.";
     reflectConditionalSections(settings);
   }
 
@@ -63,7 +78,19 @@
     els.peekLevel.forEach((radio) => {
       radio.addEventListener("change", () => {
         if (!radio.checked) return;
+        current = { ...current, peekLevel: radio.value };
+        reflectConditionalSections(current);
         YFB.setSettings({ peekLevel: radio.value });
+      });
+    });
+
+    els.budget.forEach((radio) => {
+      radio.addEventListener("change", () => {
+        if (!radio.checked) return;
+        const patch = YFB.applyBudgetChange(current, Number(radio.value), YFB.todayKey());
+        current = { ...current, ...patch };
+        reflect(current);
+        YFB.setSettings(patch);
       });
     });
 
