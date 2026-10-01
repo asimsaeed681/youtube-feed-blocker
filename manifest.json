@@ -33,6 +33,8 @@
       "js": [
         "src/lib/defaults.js",
         "src/lib/storage.js",
+        "src/lib/feed-budget.js",
+        "src/lib/peek-session.js",
         "src/content/shorts-blocker.js",
         "src/content/watch-page.js",
         "src/content/reason-banner.js",

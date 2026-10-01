@@ -8,8 +8,10 @@
  *   - ai      : instruction box + stubbed "curating" state (no network yet)
  *
  * Unless peekLevel is "none", the panel ends with a "Show my feed anyway" link.
- * It starts a countdown (after a typed reason for "reason"); when the countdown
- * ends the real feed shows until the user leaves the home page.
+ * It asks how long (capped by today's feed time), then a reason for "reason",
+ * then a 10 second pause; then a peek session starts for every YouTube tab
+ * (see lib/peek-session.js) and the real feed shows until it ends. A raise of
+ * the daily feed time asked for on an earlier day is confirmed here.
  *
  * Re-applies on YouTube's SPA navigations and on settings changes, and keeps
  * the real grid hidden via a MutationObserver as YouTube re-renders it.
@@ -22,9 +24,12 @@
   const PANEL_ID = "yfb-panel";
 
   let settings = YFB.DEFAULT_SETTINGS;
-  // Set when a peek countdown finishes; cleared when the user leaves Home.
-  let peeked = false;
+  let usage = null;
+  // True while the shared peek session (any tab started it) has time left.
+  let peekActive = false;
   let countdownTimer = null;
+
+  const remainingToday = () => YFB.budgetRemaining(settings, usage, YFB.todayKey());
 
   const isHome = () => location.pathname === "/" || location.pathname === "/index";
 
@@ -35,11 +40,16 @@
     );
   }
 
-  // Only these settings change what the panel shows. Re-rendering on any other
-  // change (Shorts, watch-page toggles) would reset a running peek countdown or
-  // wipe a half-typed to-do.
+  // Only these change what the panel shows. Re-rendering on any other change
+  // (Shorts, watch-page toggles) would reset a running peek countdown or wipe
+  // a half-typed to-do.
   function renderKey(s) {
-    return JSON.stringify([s.feedMode, s.peekLevel, s.aiInstruction, s.widgets]);
+    const today = YFB.todayKey();
+    return JSON.stringify([
+      s.feedMode, s.peekLevel, s.aiInstruction, s.widgets,
+      s.dailyBudgetMinutes, s.pendingBudget,
+      YFB.budgetRemaining(s, usage, today), YFB.pendingBudgetDue(s, today),
+    ]);
   }
 
   // --- panel rendering --------------------------------------------------
@@ -66,6 +76,10 @@
       renderAiStub(panel);
     }
 
+    // After the mode content: YFB.Widgets.render() starts by clearing the
+    // panel, so the card is prepended once that has happened.
+    if (YFB.pendingBudgetDue(settings, YFB.todayKey())) renderBudgetConfirm(panel);
+
     if (settings.peekLevel !== YFB.PEEK_LEVELS.NONE) {
       const box = el("div", "yfb-peek");
       panel.appendChild(box);
@@ -80,6 +94,37 @@
       el("p", "yfb-blank__sub", "Search or go to your Subscriptions when you want something specific.")
     );
     panel.appendChild(wrap);
+  }
+
+  // The next-day question for a raise of the daily feed time.
+  function renderBudgetConfirm(panel) {
+    const pending = settings.pendingBudget;
+    const current = settings.dailyBudgetMinutes;
+    const yesterday = YFB.todayKey(new Date(Date.now() - 86400000));
+    const when = pending.requestedOn === yesterday ? "Yesterday" : "Earlier";
+
+    const card = el("div", "yfb-confirm");
+    card.setAttribute("role", "region");
+    card.setAttribute("aria-label", "Daily feed time");
+    const text = pending.minutes === 0
+      ? when + " you asked to turn off your daily feed time limit. Turn it off?"
+      : when + " you asked to raise your daily feed time from " + current + " to " + pending.minutes + " minutes. Raise it?";
+    card.appendChild(el("p", "yfb-confirm__text", text));
+
+    const actions = el("div", "yfb-confirm__actions");
+    const yes = el("button", "yfb-btn yfb-confirm__yes", pending.minutes === 0 ? "Turn off the limit" : "Raise to " + pending.minutes);
+    yes.type = "button";
+    yes.addEventListener("click", () => {
+      YFB.setSettings({ dailyBudgetMinutes: pending.minutes, pendingBudget: null });
+    });
+    const no = el("button", "yfb-btn yfb-btn--ghost yfb-confirm__no", "Keep " + current);
+    no.type = "button";
+    no.addEventListener("click", () => {
+      YFB.setSettings({ pendingBudget: null });
+    });
+    actions.append(yes, no);
+    card.appendChild(actions);
+    panel.prepend(card);
   }
 
   function renderAiStub(panel) {
@@ -156,19 +201,48 @@
     return b;
   }
 
+  function minutesText(n) {
+    return n + (n === 1 ? " minute" : " minutes");
+  }
+
   function showPeekLink(box) {
     cancelCountdown();
     box.textContent = "";
+    const remaining = remainingToday();
+    if (remaining <= 0) {
+      box.appendChild(el("p", "yfb-peek__used", "You've used today's feed time. It resets at midnight."));
+      return;
+    }
     const link = el("button", "yfb-peek__link", "Show my feed anyway");
     link.type = "button";
-    link.addEventListener("click", () => {
-      if (settings.peekLevel === YFB.PEEK_LEVELS.REASON) showReasonForm(box);
-      else startCountdown(box, "");
-    });
+    link.addEventListener("click", () => showDurations(box));
     box.appendChild(link);
+    if (Number.isFinite(remaining)) {
+      box.appendChild(el("p", "yfb-peek__left", minutesText(remaining) + " of feed time left today"));
+    }
   }
 
-  function showReasonForm(box) {
+  function showDurations(box) {
+    box.textContent = "";
+    box.appendChild(el("p", "yfb-peek__label", "How long?"));
+    const group = el("div", "yfb-peek__durations");
+    for (const choice of YFB.durationChoices(remainingToday())) {
+      const b = el("button", "yfb-peek__duration", choice.label);
+      b.type = "button";
+      b.dataset.minutes = String(choice.minutes);
+      b.disabled = choice.disabled;
+      b.addEventListener("click", () => {
+        if (settings.peekLevel === YFB.PEEK_LEVELS.REASON) showReasonForm(box, choice.minutes);
+        else startCountdown(box, choice.minutes, "");
+      });
+      group.appendChild(b);
+    }
+    box.append(group, neverMindButton(box));
+    const first = group.querySelector("button:not(:disabled)");
+    if (first) first.focus();
+  }
+
+  function showReasonForm(box, minutes) {
     box.textContent = "";
     const form = el("form", "yfb-peek__form");
 
@@ -194,14 +268,14 @@
         input.focus();
         return;
       }
-      startCountdown(box, input.value.trim());
+      startCountdown(box, minutes, input.value.trim());
     });
 
     box.appendChild(form);
     input.focus();
   }
 
-  function startCountdown(box, reason) {
+  function startCountdown(box, minutes, reason) {
     cancelCountdown();
     box.textContent = "";
     const msg = el("p", "yfb-peek__count");
@@ -223,10 +297,23 @@
         return;
       }
       cancelCountdown();
-      if (reason) YFB.setReason(reason);
-      peeked = true;
-      sync();
+      beginPeek(minutes, reason);
     }, 1000);
+  }
+
+  // Start the shared session, then spend the minutes. If the budget changed
+  // since the buttons were drawn (another tab peeked, or it was lowered),
+  // start refuses and the panel is redrawn with fresh numbers.
+  async function beginPeek(minutes, reason) {
+    try {
+      await YFB.PeekSession.start(minutes, reason, remainingToday());
+    } catch (e) {
+      const panel = document.getElementById(PANEL_ID);
+      if (panel) delete panel.dataset.renderKey;
+      sync();
+      return;
+    }
+    YFB.FeedBudget.spend(minutes).catch(() => {});
   }
 
   // --- mounting / unmounting ------------------------------------------
@@ -261,12 +348,7 @@
   }
 
   function sync() {
-    if (!isHome()) {
-      peeked = false;
-      unmount();
-      return;
-    }
-    if (!settings.hideHomeFeed || peeked) {
+    if (!isHome() || !settings.hideHomeFeed || peekActive) {
       unmount();
       return;
     }
@@ -286,6 +368,22 @@
   // changes leave the panel (and any running countdown) alone.
   YFB.onSettingsChanged((s) => {
     settings = s;
+    sync();
+  });
+
+  function setPeek(session) {
+    peekActive = YFB.peekRemainingMs(session, Date.now()) > 0;
+    sync();
+  }
+  YFB.PeekSession.get().then(setPeek);
+  YFB.PeekSession.onChange(setPeek);
+
+  YFB.FeedBudget.getUsage().then((u) => {
+    usage = u;
+    sync();
+  });
+  YFB.FeedBudget.onUsageChanged((u) => {
+    usage = u;
     sync();
   });
 

@@ -2,8 +2,9 @@
  * Watch-page hiding.
  *
  * Two jobs:
- *   1. Mirror the hideUpNext, hideComments and blockAutoplay settings onto
- *      classes on <html>, which watch-page.css keys off.
+ *   1. Mirror the hideUpNext (off while a peek runs), hideComments and
+ *      blockAutoplay settings onto classes on <html>, which watch-page.css
+ *      keys off.
  *   2. When blockAutoplay is on, poll until YouTube's own autoplay toggle
  *      reads off, clicking the toggle's button with a settle gap between
  *      clicks, bounded by a time budget. Turning the setting off again does
@@ -37,10 +38,13 @@
 
   const root = document.documentElement;
   let settings = YFB.DEFAULT_SETTINGS;
+  // While a peek is running, Up next is part of the feed the user asked for.
+  let peekActive = false;
 
   function applyClasses() {
     for (const [key, cls] of Object.entries(CLASSES)) {
-      root.classList.toggle(cls, !!settings[key]);
+      const on = key === "hideUpNext" ? settings.hideUpNext && !peekActive : !!settings[key];
+      root.classList.toggle(cls, on);
     }
   }
 
@@ -82,4 +86,11 @@
   });
 
   document.addEventListener("yt-navigate-finish", switchOffAutoplay, true);
+
+  function setPeek(session) {
+    peekActive = YFB.peekRemainingMs(session, Date.now()) > 0;
+    applyClasses();
+  }
+  YFB.PeekSession.get().then(setPeek);
+  YFB.PeekSession.onChange(setPeek);
 })();

@@ -1,25 +1,30 @@
 /**
  * "You came for" reminder.
  *
- * After a "reason" peek, feed-replacer.js calls YFB.setReason(text). The reason
- * is shown in a small banner on every YouTube page in this tab until the user
- * closes it.
- *
- * The reason is kept in this content script's memory, not in sessionStorage:
- * page storage is readable by YouTube's own scripts, and the reason is the
- * user's private note. Memory survives YouTube's client-side navigation, which
- * is how YouTube moves between pages; a full reload clears it.
+ * Shown on every YouTube page in every tab while a peek with a reason is
+ * running, until the user closes it. The reason comes from the shared peek
+ * session (chrome.storage.session), which YouTube's page scripts cannot read.
+ * The banner itself is in YouTube's page, so the reason is visible on screen
+ * there; it is never saved or sent anywhere by the extension.
  */
 (function () {
   "use strict";
 
   const YFB = window.YFB;
   const BANNER_ID = "yfb-reason-banner";
-  let reason = "";
+  let session = null;
+
+  function shouldShow() {
+    return (
+      YFB.peekRemainingMs(session, Date.now()) > 0 &&
+      !!session.reason &&
+      !session.bannerClosed
+    );
+  }
 
   function render() {
     let bar = document.getElementById(BANNER_ID);
-    if (!reason) {
+    if (!shouldShow()) {
       if (bar) bar.remove();
       return;
     }
@@ -40,21 +45,24 @@
       close.className = "yfb-reason__close";
       close.setAttribute("aria-label", "Close reminder");
       close.textContent = "×";
-      close.addEventListener("click", () => YFB.setReason(""));
+      close.addEventListener("click", () => {
+        bar.remove();
+        YFB.PeekSession.closeBanner();
+      });
 
       bar.append(text, close);
       document.body.appendChild(bar);
     }
     // textContent, never innerHTML: the reason is user-typed text.
-    bar.querySelector(".yfb-reason__text").textContent = "You came for: " + reason;
+    bar.querySelector(".yfb-reason__text").textContent = "You came for: " + session.reason;
   }
 
-  YFB.setReason = function setReason(value) {
-    reason = typeof value === "string" ? value.trim() : "";
+  YFB.PeekSession.get().then((s) => {
+    session = s;
     render();
-  };
-
-  YFB.getReason = function getReason() {
-    return reason;
-  };
+  });
+  YFB.PeekSession.onChange((s) => {
+    session = s;
+    render();
+  });
 })();

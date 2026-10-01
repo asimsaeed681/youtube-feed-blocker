@@ -106,6 +106,37 @@ async function setSettings(extId, patch) {
   await p.close();
 }
 
+// Peek sessions live in chrome.storage.session and feed-time usage in sync.
+// Both are shared by every tab, so tests reset them between scenarios.
+async function extEval(extId, fn, arg) {
+  const p = await ctx.newPage();
+  await p.goto(`chrome-extension://${extId}/src/popup/popup.html`);
+  const out = await p.evaluate(fn, arg);
+  await p.close();
+  return out;
+}
+const resetPeek = (extId) =>
+  extEval(extId, () =>
+    Promise.all([
+      new Promise((r) => chrome.storage.session.remove("peekSession", r)),
+      new Promise((r) => chrome.storage.sync.remove("feedTimeUsage", r)),
+    ])
+  );
+// Mark `used` minutes as spent today (local date, computed in the browser).
+const setUsedToday = (extId, used) =>
+  extEval(
+    extId,
+    (u) => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const date = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+      return new Promise((r) => chrome.storage.sync.set({ feedTimeUsage: { date, usedMinutes: u } }, r));
+    },
+    used
+  );
+const readSync = (extId, key) =>
+  extEval(extId, (k) => new Promise((r) => chrome.storage.sync.get(k, (x) => r(x[k] ?? null))), key);
+
 try {
   const ext = await ctx.newPage();
   await ext.goto("chrome://extensions");
@@ -282,20 +313,21 @@ try {
     JSON.stringify(playlist)
   );
 
-  // ---------- v0.2: home feed toggle and peeking ----------
+  // ---------- v0.2: home feed toggle and timed peeking ----------
   // setSettings opens and closes a helper tab, which can leave the YouTube tab
-  // in the background, and the countdown (correctly) pauses in background tabs.
+  // in the background, and the 10 second pause (correctly) stops in background
+  // tabs.
   const goHome = async () => {
     await yt.bringToFront();
     await yt.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
     await yt.waitForSelector("#yfb-panel", { timeout: 20000 }).catch(() => {});
     await yt.waitForTimeout(1500);
   };
-  const feedRevealed = () =>
-    yt.evaluate(
+  const feedRevealed = (page = yt) =>
+    page.evaluate(
       () => !document.documentElement.classList.contains("yfb-home-replaced") && !document.getElementById("yfb-panel")
     );
-  // Client-side (SPA) navigations, so the content script keeps its state.
+  // Client-side (SPA) navigations.
   const spaToSearch = async () => {
     await yt.fill('input[name="search_query"]', "css grid");
     await yt.press('input[name="search_query"]', "Enter");
@@ -306,14 +338,16 @@ try {
     await yt.evaluate(() => document.querySelector("a#logo, ytd-topbar-logo-renderer a")?.click());
     await yt.waitForTimeout(3000);
   };
+  const durationButtons = () =>
+    yt.$$eval("#yfb-panel .yfb-peek__duration", (bs) =>
+      bs.map((b) => b.dataset.minutes + (b.disabled ? "x" : ""))
+    );
+  const pickDuration = (minutes) => yt.click(`#yfb-panel .yfb-peek__duration[data-minutes="${minutes}"]`);
 
-  // Pause level: countdown, reveal, and the pause returns after leaving Home.
-  // Playwright keeps every page in this session visible and focused -
-  // bringToFront() never toggles document.hidden here - so the "tab hidden"
-  // check below drives document.hidden directly, via CDP, inside the content
-  // script's own isolated world instead of relying on a real tab switch.
-  // Execution contexts are only reported for ones created after Runtime.enable,
-  // so this must run before the goHome() navigation right below.
+  // Playwright keeps every page visible and focused, so the "tab hidden"
+  // check drives document.hidden directly, via CDP, inside the content
+  // script's isolated world. Contexts are only reported after Runtime.enable,
+  // so this runs before the goHome() navigation below.
   const cdp = await ctx.newCDPSession(yt);
   await cdp.send("Runtime.enable");
   let isolatedContext = null;
@@ -324,9 +358,14 @@ try {
     }
   });
 
+  // Pause level, 5 minutes: duration step, pause, reveal, spend.
+  await resetPeek(extId);
   await setSettings(extId, { peekLevel: "pause" });
   await goHome();
   await yt.click("#yfb-panel .yfb-peek__link");
+  const offered = await durationButtons();
+  log("duration step offers 5, 10, 15 and 30 minutes", offered.join(",") === "5,10,15,30", offered.join(","));
+  await pickDuration(5);
   const countText = await yt.textContent("#yfb-panel .yfb-peek__count").catch(() => null);
   log("pause: countdown starts at 10 seconds", /10 seconds/.test(countText || ""), countText);
 
@@ -334,24 +373,37 @@ try {
   await setSettings(extId, { peekLevel: "pause", hideComments: true });
   await yt.bringToFront();
   await yt.waitForTimeout(1000);
-  const stillCounting = await yt.$("#yfb-panel .yfb-peek__count");
-  log("unrelated setting change keeps the countdown running", !!stillCounting);
+  log("unrelated setting change keeps the countdown running", !!(await yt.$("#yfb-panel .yfb-peek__count")));
 
   await yt.waitForTimeout(10500);
   log("pause: real feed shows after the countdown", await feedRevealed());
+  const usage5 = await readSync(extId, "feedTimeUsage");
+  log("starting a 5 minute peek spends 5 minutes", !!usage5 && usage5.usedMinutes === 5, JSON.stringify(usage5));
 
+  // The peek lasts across navigation, reloads and tabs.
+  await yt.bringToFront();
   await spaToSearch();
   await spaToHome();
-  const pauseBack = await yt.evaluate(
-    () => location.pathname === "/" && !!document.querySelector("#yfb-panel .yfb-peek__link")
-  );
-  log("leaving Home and coming back brings the pause back", pauseBack);
+  log("peek lasts across navigation", await feedRevealed());
+  await yt.reload({ waitUntil: "domcontentloaded" });
+  await yt.waitForTimeout(3000);
+  log("peek survives a reload", await feedRevealed());
+  const yt2 = await ctx.newPage();
+  await yt2.goto("https://www.youtube.com/", { waitUntil: "domcontentloaded" });
+  await yt2.waitForTimeout(4000);
+  log("peek applies in a second YouTube tab", await feedRevealed(yt2));
+  await yt2.goto("https://www.youtube.com/watch?v=dQw4w9WgXcQ", { waitUntil: "domcontentloaded" });
+  await yt2.waitForSelector("ytd-watch-flexy #related", { state: "attached", timeout: 20000 }).catch(() => {});
+  await yt2.waitForTimeout(2000);
+  const relatedDuringPeek = await display(yt2, "ytd-watch-flexy #related");
+  log("Up next shows during a peek", !["none", "missing"].includes(relatedDuringPeek), relatedDuringPeek);
+  await yt2.close();
 
-  // Hiding the tab pauses the countdown. feed-replacer.js's countdown tick
-  // reads document.hidden from the extension's own isolated world, so we
-  // override it there directly - isolated-world wrappers are separate from
-  // the page's, so this can't leak into the page itself.
+  // Hidden tab: the 10 second pause stops while document.hidden is true.
+  await resetPeek(extId);
+  await goHome();
   await yt.click("#yfb-panel .yfb-peek__link");
+  await pickDuration(5);
   if (!isolatedContext) {
     throw new Error("could not find the extension's isolated execution context via CDP");
   }
@@ -361,16 +413,13 @@ try {
   });
   await yt.waitForTimeout(12000);
   log("countdown pauses while the tab is hidden", !(await feedRevealed()));
-
-  await cdp.send("Runtime.evaluate", {
-    contextId: isolatedContext.id,
-    expression: "delete document.hidden",
-  });
+  await cdp.send("Runtime.evaluate", { contextId: isolatedContext.id, expression: "delete document.hidden" });
   await yt.waitForTimeout(11000);
   log("countdown resumes when the tab is visible again", await feedRevealed());
   await cdp.detach();
 
-  // Reason level: validation, never mind, banner, HTML stays text, close.
+  // Reason level: never mind, validation, banner, HTML stays text, close.
+  await resetPeek(extId);
   await setSettings(extId, { peekLevel: "reason" });
   await goHome();
   await yt.click("#yfb-panel .yfb-peek__link");
@@ -378,11 +427,11 @@ try {
   log("never mind returns to the link", !!(await yt.$("#yfb-panel .yfb-peek__link")));
 
   await yt.click("#yfb-panel .yfb-peek__link");
+  await pickDuration(5);
   await yt.fill("#yfb-peek-reason", "  a ");
   await yt.click('#yfb-panel .yfb-peek__form button[type="submit"]');
   const reasonError = await yt.textContent("#yfb-panel .yfb-peek__error");
-  const countingEarly = await yt.$("#yfb-panel .yfb-peek__count");
-  log("reason: too-short reason is rejected", !!reasonError && !countingEarly, reasonError);
+  log("reason: too-short reason is rejected", !!reasonError && !(await yt.$("#yfb-panel .yfb-peek__count")), reasonError);
 
   await yt.fill("#yfb-peek-reason", "<b>css</b> grid layouts");
   await yt.click('#yfb-panel .yfb-peek__form button[type="submit"]');
@@ -394,27 +443,64 @@ try {
     const b = document.getElementById("yfb-reason-banner");
     return b ? { text: b.querySelector(".yfb-reason__text").textContent, injected: !!b.querySelector(".yfb-reason__text b") } : null;
   });
-  log(
-    "banner shows the reason on the next page",
-    !!banner && banner.text === "You came for: <b>css</b> grid layouts",
-    banner && banner.text
-  );
+  log("banner shows the reason on the next page", !!banner && banner.text === "You came for: <b>css</b> grid layouts", banner && banner.text);
   log("reason is shown as text, not HTML", !!banner && !banner.injected);
   await yt.click("#yfb-reason-banner .yfb-reason__close");
-  log("closing the banner removes it", !(await yt.$("#yfb-reason-banner")));
+  await yt.waitForTimeout(500);
+  await spaToHome();
+  log("a closed banner stays closed for the rest of the peek", !(await yt.$("#yfb-reason-banner")));
+
+  // Budget: capped choices, remaining text, used up.
+  await resetPeek(extId);
+  await setSettings(extId, { peekLevel: "pause" });
+  await setUsedToday(extId, 18);
+  await goHome();
+  const leftText = await yt.textContent("#yfb-panel .yfb-peek__left").catch(() => null);
+  log("remaining feed time is shown", leftText === "12 minutes of feed time left today", leftText);
+  await yt.click("#yfb-panel .yfb-peek__link");
+  const capped = await durationButtons();
+  log("choices are capped by what's left", capped.join(",") === "5,10,12,15x,30x", capped.join(","));
+  await setUsedToday(extId, 30);
+  await goHome();
+  const usedUp = await yt.textContent("#yfb-panel .yfb-peek__used").catch(() => null);
+  log(
+    "used-up message replaces the link",
+    usedUp === "You've used today's feed time. It resets at midnight." && !(await yt.$("#yfb-panel .yfb-peek__link")),
+    usedUp
+  );
+
+  // Next-day confirmation of a pending raise.
+  await resetPeek(extId);
+  await setSettings(extId, { dailyBudgetMinutes: 30, pendingBudget: { minutes: 45, requestedOn: "2000-01-01" } });
+  await goHome();
+  const confirmText = await yt.textContent("#yfb-panel .yfb-confirm__text").catch(() => null);
+  await yt.click("#yfb-panel .yfb-confirm__yes");
+  await yt.waitForTimeout(800);
+  const afterYes = await readSync(extId, "settings");
+  log(
+    "confirming a raise applies it",
+    /from 30 to 45 minutes/.test(confirmText || "") && afterYes.dailyBudgetMinutes === 45 && afterYes.pendingBudget === null &&
+      !(await yt.$("#yfb-panel .yfb-confirm")),
+    confirmText
+  );
+  await setSettings(extId, { dailyBudgetMinutes: 45, pendingBudget: { minutes: 90, requestedOn: "2000-01-01" } });
+  await goHome();
+  await yt.click("#yfb-panel .yfb-confirm__no");
+  await yt.waitForTimeout(800);
+  const afterNo = await readSync(extId, "settings");
+  log("keeping the old budget clears the request", afterNo.dailyBudgetMinutes === 45 && afterNo.pendingBudget === null, JSON.stringify(afterNo));
 
   // No peeking: no link at all.
+  await resetPeek(extId);
   await setSettings(extId, { peekLevel: "none" });
   await goHome();
-  log(
-    "no peeking: panel without a peek link",
-    !!(await yt.$("#yfb-panel")) && !(await yt.$("#yfb-panel .yfb-peek__link"))
-  );
+  log("no peeking: panel without a peek link", !!(await yt.$("#yfb-panel")) && !(await yt.$("#yfb-panel .yfb-peek__link")));
 
   // Home feed toggle off shows the real feed live.
   await setSettings(extId, { hideHomeFeed: false });
   await yt.waitForTimeout(1500);
   log("home feed toggle off shows the real feed, no reload", await feedRevealed());
+  await resetPeek(extId);
 
   // ---------- v0.2: popup ----------
   await setSettings(extId, {});

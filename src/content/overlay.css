@@ -345,3 +345,60 @@ html[dark] #yfb-panel {
   outline: 2px solid #d9362b;
   outline-offset: 1px;
 }
+
+/* --- timed peek: remaining time, duration step, used-up --- */
+#yfb-panel .yfb-peek__left,
+#yfb-panel .yfb-peek__used {
+  margin: 8px 0 0;
+  color: var(--yfb-subtext);
+  font-size: 13px;
+}
+#yfb-panel .yfb-peek__used {
+  font-size: 14px;
+}
+#yfb-panel .yfb-peek__durations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0;
+}
+#yfb-panel .yfb-peek__duration {
+  padding: 6px 12px;
+  border: 1px solid var(--yfb-border);
+  border-radius: 8px;
+  background: var(--yfb-card);
+  color: var(--yfb-text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+#yfb-panel .yfb-peek__duration:hover:not(:disabled) {
+  border-color: #d9362b;
+}
+#yfb-panel .yfb-peek__duration:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#yfb-panel .yfb-peek__duration:focus-visible {
+  outline: 2px solid #d9362b;
+  outline-offset: 2px;
+}
+
+/* --- next-day confirmation of a daily feed time raise --- */
+#yfb-panel .yfb-confirm {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-left: 3px solid #d9362b;
+  border-radius: 12px;
+  background: var(--yfb-card);
+}
+#yfb-panel .yfb-confirm__text {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+#yfb-panel .yfb-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
