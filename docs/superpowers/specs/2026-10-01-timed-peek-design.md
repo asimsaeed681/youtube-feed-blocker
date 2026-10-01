@@ -1,4 +1,4 @@
-# Timed peek design (ships in v0.2)
+# Timed peek and daily feed time design (ships in v0.2)
 
 Status: approved in conversation 2026-10-01, pending written-spec review.
 Builds on: `2026-09-29-v0.2-hide-and-peek-design.md` (peek levels, 10 second
@@ -10,12 +10,15 @@ the user leaves the home page" rule.
 A peek is a deliberate, time-boxed visit to the feed. The user picks how long
 up front, sees a gentle warning near the end, and when time is up the video
 pauses and asks them to choose: keep watching this one video, or go home.
+All peeks in a day draw from a daily feed time budget that is easy to lower
+and slow to raise.
 
 ## User flow
 
 1. On the blocked home page, "Show my feed anyway" (hidden at peek level
    "none", as today).
-2. Pick a duration: **5, 10, 15 or 30 minutes** (four buttons, no free input).
+2. Pick a duration: **5, 10, 15 or 30 minutes** (four buttons, no free input),
+   limited by today's remaining feed time (see "Daily feed time").
 3. If peek level is "reason": type what you came for (validation unchanged).
 4. The 10 second pause runs (unchanged: only counts while the tab is
    visible, "Never mind" cancels).
@@ -40,6 +43,48 @@ pauses and asks them to choose: keep watching this one video, or go home.
 Navigation during a session (home, search, watch pages, new tabs, refresh)
 does not end it. Only time running out ends it, or closing the browser.
 
+## Daily feed time
+
+A daily budget of feed minutes, spent across any number of peeks.
+
+- **Setting:** "Daily feed time" in the popup, under "How hard should it be to
+  peek?": Off, 15, 30, 45, 60 or 90 minutes. **Default 30.** Hidden while peek
+  level is "No peeking" (no peeks to budget).
+- **Spending:** starting a peek deducts its full chosen length at the moment the
+  session starts (after the 10 second pause). Leaving early does not refund.
+- **Reset:** at local midnight. Usage is tied to the calendar date
+  (`YYYY-MM-DD`, local time); a new date means zero used.
+- **Choices are capped:** duration buttons longer than the remaining time are
+  disabled. If the remaining time is under 30 minutes and is not one of the
+  preset lengths, an extra button "N min (rest of today)" is offered.
+  Example with 12 left: 5 min, 10 min, "12 min (rest of today)"; 15 and 30
+  disabled.
+- **Shown on the blocked home page**, under the peek link: "12 minutes of feed
+  time left today" (budget Off: nothing shown).
+- **Used up:** the peek link is replaced by "You've used today's feed time. It
+  resets at midnight."
+- **Lowering** the budget (or switching Off to a number) applies immediately.
+  If the new budget is below what is already used, remaining is 0. A running
+  peek is not cut short.
+- **Raising** the budget (a higher number, or a number to Off) does not apply.
+  It is saved as a pending request with today's date, and the popup shows
+  "You asked for 45 minutes. You'll be asked to confirm tomorrow." A later
+  lower choice cancels the pending request; a later raise replaces it.
+- **Next-day confirmation:** on any later date, the blocked home page shows a
+  card above the panel content until answered: "Yesterday you asked to raise
+  your daily feed time from 30 to 45 minutes. Raise it?" with **Raise to 45**
+  and **Keep 30**. (For Off: "...to turn off your daily feed time limit. Turn
+  it off?" with **Turn off the limit** / **Keep 30**.) Either answer clears the
+  request. The card appears even when today's time is used up.
+
+Settings additions (`chrome.storage.sync`, under `settings`):
+`dailyBudgetMinutes` (0 means Off; one of 0, 15, 30, 45, 60, 90; default 30)
+and `pendingBudget` (`null` or `{ minutes, requestedOn: "YYYY-MM-DD" }`).
+Usage (`chrome.storage.sync`, key `feedTimeUsage`):
+`{ date: "YYYY-MM-DD", usedMinutes: 10 }`. Sync rather than local so the budget
+is per person across their Chrome installs; writes happen once per peek, far
+below sync quotas.
+
 ## State
 
 One object in `chrome.storage.session` under key `peekSession`:
@@ -59,7 +104,7 @@ One object in `chrome.storage.session` under key `peekSession`:
   started session is shared.
 
 Constants in `defaults.js`: `YFB.PEEK_DURATIONS = [5, 10, 15, 30]` (minutes),
-`YFB.PEEK_WARN_MINUTES = 5`.
+`YFB.PEEK_WARN_MINUTES = 5`, `YFB.BUDGET_CHOICES = [0, 15, 30, 45, 60, 90]`.
 
 ## Components
 
@@ -67,6 +112,13 @@ Constants in `defaults.js`: `YFB.PEEK_DURATIONS = [5, 10, 15, 30]` (minutes),
   `start(minutes, reason)`, `closeBanner()`, `clear()`, `onChange(cb)`, and a
   pure helper `YFB.peekRemainingMs(session, now)` (0 when no or expired
   session). Loaded in content scripts after `storage.js`.
+- **`src/lib/feed-budget.js` (new):** pure helpers `YFB.todayKey(date)`,
+  `YFB.budgetRemaining(settings, usage, todayKey)` (Infinity when Off),
+  `YFB.durationChoices(remaining)` (the buttons and which are disabled),
+  `YFB.applyBudgetChange(settings, newMinutes, todayKey)` (returns the settings
+  patch: immediate lower, or pending raise), plus `YFB.FeedBudget.spend(minutes)`
+  and `YFB.FeedBudget.getUsage()` over `feedTimeUsage`. Loaded in content
+  scripts and the popup.
 - **`src/background.js`:** sets the session storage access level at startup.
 - **`src/content/feed-replacer.js`:** the in-memory `peeked` flag is replaced by
   "session active". Adds the duration step before the reason step. Starting
@@ -91,7 +143,14 @@ Constants in `defaults.js`: `YFB.PEEK_DURATIONS = [5, 10, 15, 30]` (minutes),
 All user-facing copy, no em dashes:
 
 - Duration step label: "How long?" Buttons: "5 min", "10 min", "15 min",
-  "30 min".
+  "30 min", and when applicable "N min (rest of today)".
+- Remaining: "N minutes of feed time left today" ("1 minute" when 1).
+- Used up: "You've used today's feed time. It resets at midnight."
+- Popup: section title "Daily feed time"; options "Off", "15 min", "30 min",
+  "45 min", "60 min", "90 min"; pending note "You asked for N minutes. You'll
+  be asked to confirm tomorrow." (Off: "You asked to turn the limit off.
+  You'll be asked to confirm tomorrow.")
+- Confirmation card: as in "Daily feed time".
 - Chip: "Feed closes in M:SS".
 - Card title: "Time's up". Body: "Your feed time is over." Buttons: "Keep
   watching this video", "Back to Home".
@@ -102,16 +161,27 @@ All user-facing copy, no em dashes:
   `chrome.storage.session`).
 - PRIVACY.md / privacy.html: the peek reason and timer are kept in the
   browser's session storage until the peek ends or the browser closes; never
-  sent anywhere.
+  sent anywhere. The daily feed time setting, any pending raise, and today's
+  used minutes are stored in `chrome.storage.sync` like other settings.
 - store-listing.md "PEEK, BUT ON PURPOSE" section: mention choosing 5 to 30
-  minutes, the closing countdown, and the Time's up pause.
+  minutes, the daily feed time budget (lower anytime, raises need a next-day
+  confirmation), the closing countdown, and the Time's up pause. The `storage`
+  justification gains the daily feed time and usage.
 - README features list updated to match.
 
 ## Testing
 
 Unit (`test/unit.mjs`, with an in-memory `chrome.storage.session` stub):
 - `peekRemainingMs` for no session, active session, expired session.
-- `start(minutes, reason)` rejects a duration outside `PEEK_DURATIONS`.
+- `start(minutes, reason)` rejects a duration outside `PEEK_DURATIONS`, except
+  the "rest of today" length equal to the remaining budget.
+- `budgetRemaining`: Off, fresh day, partly used, used up, budget lowered below
+  used (0), usage from a previous date ignored.
+- `durationChoices` for remaining 60, 30, 12, 5, 3, 0 and Infinity.
+- `applyBudgetChange`: lower applies now and clears a pending raise; raise and
+  Off become pending with today's date; a second raise replaces the first.
+- v0.2-without-budget stored settings load with `dailyBudgetMinutes: 30`,
+  `pendingBudget: null`.
 
 E2E (`test/e2e.mjs`), replacing the "leaving Home brings the pause back"
 check, which no longer matches the design:
@@ -126,12 +196,21 @@ check, which no longer matches the design:
   extension page): video paused, card shown; "Keep watching" resumes and
   removes the card; Up next hidden again.
 - Expiry on the home page: panel back, no card.
+- With usage set to leave 12 minutes: buttons 5, 10, "12 min (rest of today)"
+  enabled, 15 and 30 disabled; remaining text shown.
+- Used up: link replaced by the used-up message.
+- Starting a 5 minute peek adds 5 to `feedTimeUsage`.
+- A pending raise dated yesterday shows the confirmation card; "Raise to N"
+  applies it and clears it; "Keep" clears it without applying.
+- Popup: choosing a lower budget saves it; choosing a higher one saves a pending
+  request and shows the note.
 
 Live QA (`test/live-qa-cdp.mjs`): one signed-in pass of start, chip, expiry
 on a real video.
 
 ## Out of scope
 
-- Ending a peek early from the chip.
+- Ending a peek early from the chip (and refunding unused minutes).
 - Automatic grace for videos with little time left (replaced by the card).
-- Cooldowns or daily limits.
+- Cooldowns between peeks, or a count-based daily peek limit (the time budget
+  replaces both).
