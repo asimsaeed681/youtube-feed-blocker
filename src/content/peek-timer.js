@@ -99,6 +99,21 @@
       if (e.key === "Escape") {
         e.stopPropagation();
         keepWatching();
+        return;
+      }
+      // Trap Tab/Shift+Tab between the two buttons: this is a modal over
+      // YouTube's own page, which has its own focusable elements the
+      // overlay should not leak focus into (the Escape handler above is
+      // bound to the overlay, so focus leaving it stops Escape from
+      // reaching this listener at all).
+      if (e.key === "Tab") {
+        if (e.shiftKey && document.activeElement === keep) {
+          e.preventDefault();
+          home.focus();
+        } else if (!e.shiftKey && document.activeElement === home) {
+          e.preventDefault();
+          keep.focus();
+        }
       }
     });
 

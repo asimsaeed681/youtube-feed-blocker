@@ -535,6 +535,11 @@ try {
   }));
   log("time's up on a video: card shown and video paused",
     atExpiry.card && atExpiry.title === "Time's up" && atExpiry.paused === true, JSON.stringify(atExpiry));
+  await yt.keyboard.press("Tab");
+  await yt.keyboard.press("Tab");
+  await yt.keyboard.press("Tab");
+  const focusTrapped = await yt.evaluate(() => document.getElementById("yfb-timeup")?.contains(document.activeElement));
+  log("focus stays inside the time's up card", focusTrapped === true, focusTrapped);
   await yt.click("#yfb-timeup .yfb-timeup__keep");
   await yt.waitForTimeout(1500);
   const afterKeep = await yt.evaluate(() => ({
