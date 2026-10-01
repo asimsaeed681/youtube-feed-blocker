@@ -98,6 +98,8 @@ async function setSettings(extId, patch) {
       feedMode: "widgets",
       aiInstruction: "",
       widgets: { todo: true, quote: true },
+      dailyBudgetMinutes: 30,
+      pendingBudget: null,
       ...patch,
     }
   );

@@ -13,6 +13,13 @@
   const oneOf = (value, allowed, fallback) =>
     Object.values(allowed).includes(value) ? value : fallback;
 
+  const isDateKey = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  function validPending(p) {
+    return p && YFB.BUDGET_CHOICES.includes(p.minutes) && isDateKey(p.requestedOn)
+      ? { minutes: p.minutes, requestedOn: p.requestedOn }
+      : null;
+  }
+
   function mergeWithDefaults(stored) {
     const d = YFB.DEFAULT_SETTINGS;
     const s = stored || {};
@@ -30,6 +37,10 @@
         todo: bool(s.widgets?.todo, d.widgets.todo),
         quote: bool(s.widgets?.quote, d.widgets.quote),
       },
+      dailyBudgetMinutes: YFB.BUDGET_CHOICES.includes(s.dailyBudgetMinutes)
+        ? s.dailyBudgetMinutes
+        : d.dailyBudgetMinutes,
+      pendingBudget: validPending(s.pendingBudget),
     };
   }
   YFB.mergeWithDefaults = mergeWithDefaults;

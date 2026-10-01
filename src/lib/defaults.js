@@ -25,6 +25,16 @@
   YFB.PEEK_SECONDS = 10;
   YFB.MIN_REASON_LENGTH = 3;
 
+  // Timed peeks and the daily feed time budget (all in minutes).
+  YFB.PEEK_DURATIONS = Object.freeze([5, 10, 15, 30]);
+  YFB.PEEK_WARN_MINUTES = 5;
+  YFB.BUDGET_CHOICES = Object.freeze([0, 15, 30, 45, 60, 90]);
+
+  // chrome.storage.session key for the running peek (shared by all tabs) and
+  // chrome.storage.sync key for today's used feed minutes.
+  YFB.PEEK_SESSION_KEY = "peekSession";
+  YFB.USAGE_KEY = "feedTimeUsage";
+
   YFB.DEFAULT_SETTINGS = Object.freeze({
     shortsBlocking: true,
     hideHomeFeed: true,
@@ -35,6 +45,8 @@
     feedMode: YFB.FEED_MODES.WIDGETS,
     aiInstruction: "",
     widgets: Object.freeze({ todo: true, quote: true }),
+    dailyBudgetMinutes: 30,
+    pendingBudget: null,
   });
 
   YFB.isValidReason = function isValidReason(value) {
