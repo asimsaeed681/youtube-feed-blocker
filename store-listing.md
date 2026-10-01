@@ -66,7 +66,7 @@ a preview of an upcoming AI-curated feed.
 PRIVACY
 No data is collected. No network requests. Your settings are stored in your
 browser (chrome.storage) and synced only across your own Chrome by Chrome
-itself. The reason you type when peeking is only kept until the peek ends or the browser closes. The extension never saves it or sends it anywhere. Full policy:
+itself. The reason you type when peeking is kept in the browser's session storage until the peek ends or the browser closes, and is never sent anywhere. Full policy:
 https://asimsaeed681.github.io/youtube-feed-blocker/privacy.html
 
 ABOUT "AI-CURATED" MODE
@@ -112,7 +112,8 @@ English
   ```
   The extension's only function is modifying youtube.com pages: hiding the home
   feed, Shorts, suggested videos, autoplay and comments, and showing its own
-  panel in place of the home feed. It runs only on www.youtube.com and makes no
+  panel in place of the home feed, a closing countdown during a peek, and a
+  pause when peek time is up. It runs only on www.youtube.com and makes no
   network requests.
   ```
 
@@ -121,8 +122,9 @@ English
 **Data usage disclosures (the checklist):**
 
 - Does this item collect or use personal or sensitive user data?
-  **No.** The extension stores only user-chosen settings via chrome.storage and
-  transmits nothing.
+  **No.** The extension stores only user-chosen settings, today's used feed
+  minutes, and the running peek (all in browser storage via chrome.storage),
+  and transmits nothing.
 - Sale of data: No.
 - Use for purposes unrelated to core functionality: No.
 - Use for creditworthiness / lending: No.

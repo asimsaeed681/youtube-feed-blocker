@@ -84,7 +84,7 @@ and the running peek in `chrome.storage.session` (`peekSession`:
 
 **Signed-out smoke test** — `node test/e2e.mjs` loads the extension unpacked into
 Playwright's Chromium and checks Shorts removal, the `/shorts` redirect, all
-three feed modes, SPA re-mount, and live settings propagation (57 assertions).
+three feed modes, SPA re-mount, and live settings propagation (59 assertions).
 Reuses the Playwright build the Playwright MCP already installed; screenshots to
 `test/screenshots/`.
 

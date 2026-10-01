@@ -21,7 +21,7 @@ browser.
 No other data is stored. There is no account, no login, and no identifier of
 any kind.
 
-The reason you type when peeking, and the end time of the current peek, are kept in the browser's session storage (`chrome.storage.session`) until the peek ends or the browser closes. They are never sent anywhere.
+The reason you type when peeking, and the end time of the current peek, are kept in the browser's session storage (`chrome.storage.session`) until the peek ends (or until the next YouTube visit after it ends) or the browser closes. They are never sent anywhere.
 
 ## What the extension does NOT do
 
